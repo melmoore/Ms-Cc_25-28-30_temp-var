@@ -1,0 +1,224 @@
+---
+title: "Ms+Cc_TV_James-update_1-28-19"
+author: "Elizabeth Moore"
+date: "January 28, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE, echo=FALSE}
+#load libraries
+
+library(scales)
+library(readr)
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(ggplot2)
+
+
+```
+
+
+I'm working on finalizing the analysis for an experiment I did in 2017, as Joel and I are writing up the manuscript for submission. The experiment went as follows:
+
+An incomplete factorial design with two parasitization treatments (parasitized/unparasitized), three average temperatures (25, 28, 30) and 2-3 fluctuation treatments (+/-0, +/-5, +/-10). Only the 30C average treatment had the +/-5 fluctuation.
+
+Data sets:
+```{r}
+#load data
+
+#wide format for wasp analyses
+tv <- read_csv("~/Manduca expts/Summer+Fall 2017/25.28.30 wasp temp var/data files/25-28-30_tv-final_clean.csv", 
+               col_types = cols(temp.avg = col_factor(levels = c("25","28", "30")), 
+                                temp.var = col_factor(levels = c("0", "5", "10")), 
+                                treatment = col_factor(levels = c("control","para"))))
+
+View(tv)
+
+
+#long format for caterpillar analyses
+tv.long <- read_csv("~/Manduca expts/Summer+Fall 2017/25.28.30 wasp temp var/data files/25-28-30_tv-final_clean_LONG.csv", 
+                    col_types = cols(temp.avg = col_factor(levels = c("25", "28", "30")), 
+                                     temp.var = col_factor(levels = c("0","5", "10")), 
+                                     treatment = col_factor(levels = c("control","para"))))
+
+View(tv.long)
+
+
+```
+
+
+CATERPILLAR ANALYSES:
+
+When we discussed my analyses previously, we settled on the following model to analyze caterpillar growth. The model wouldn't run unless I removed the +/-5 fluctuation treatment. This was fine for preliminary data analysis, but I'm unsure how to address this for the final model that will go into my manuscript.
+
+```{r, include=FALSE, echo=FALSE}
+
+#creating a column for log.mass in tv.long
+
+tv.long$log.mass<-log(tv.long$mass)
+
+```
+
+
+```{r}
+#BUILDING A MIXED EFFECTS MODEL FOR CATERPILLAR MASS
+
+##Basing the model on the model I created with James and Joel (KU model) for CxPxT experiment
+##age interacts with all terms as a linear and quadratic term, either temp.avg will be a stand alone, 
+##to account for the effect of temperature on mass at 3rd (intercept).
+             
+
+##James said the model doesn't run with the +/- 5 treatment because there are probably too many variables, can't converge. 
+  ##Suggested taking out +/-5, model seems to work without
+
+
+tv.long.no5<-subset(tv.long,temp.var!=5)
+
+
+##MODEL 1--no +/- 5 fluctuation
+##log.mass is numeric, day.age is integer, treat and temp.avg and temp.var are factors
+##random effect is linear day age by individual
+  ##temp.avg is included as a fixed effect that doesn't interact with age to account for differing intercepts (mass at 3rd)
+  ##due to different rearing temperatures
+    ##syntax of (x+y+z)^2 removes the 4 way interactions, leaving only 3 way interactions with the different age terms
+
+
+
+lms.mod1<-lme(log.mass~(day.age+I(day.age^2)):(temp.var+treatment+temp.avg)^2+temp.avg,
+             random=~day.age|bug.id,
+             data=tv.long.no5,
+             na.action=na.omit,
+             method="ML")
+
+anova(lms.mod1)
+summary(lms.mod1)
+```
+
+
+
+WASP ANALYSES:
+
+When looking at the data for my parasitoid wasps, I've run into the problem where I can analyze development time and survival to wasp emergence from their hosts, but not to adult eclosion. The problem that we discussed previously is that the 30+/-10 treatment has complete mortality for the wasps--a few hosts have wasps emerge, but none survive to eclosion. You mentioned that it might be complete separation, since all of my values in one treatment are 0. I'm not sure what is the best way to analyze and present this data in my manuscript. 
+
+```{r}
+
+#MODELLING WASP TOTAL SURVIVAL
+
+#subset out +/-5 treatment
+
+tv.no5<-subset(tv,temp.var!=5)
+tv.no5$temp.var<-factor(tv.no5$temp.var)
+
+##subset to only parasitized treatment
+
+tv.para<-subset(tv.no5,treatment=="para")
+
+
+#Making a column for total died (load-num.ecl)
+
+tv.para$tot.died<-tv.para$load-tv.para$num.ecl
+
+
+
+#making a glm model of wasp total survival to test for overdispersion
+  ##temp.avg==factor, temp.var==factor, load==numeric
+    ###overdispersion is high, should add random effect of individual-James says this is fine for now, due to problems with
+    ###running the glmer (conversion problems due to multiple issues--see lab notebook)
+
+wtots.mod1<-glm(cbind(num.ecl,tot.died)~temp.avg*temp.var*load,
+                family=quasibinomial,
+                data=tv.para,
+                na.action = na.omit)
+
+anova(wtots.mod1,test="F")
+summary(wtots.mod1)
+
+
+
+#rescaling load
+
+tv.para$resc.ld<-rescale(tv.para$load,to=c(0,1))
+
+
+#Making a glmer (binomial) model of wasp total survival
+  ##temp.avg==factor, temp.var==numeric, resc.load==numeric, mongos treated as NAs until I determine a better way to deal with them
+    ###won't run without rescaling load
+    ###as of 2.27.18, won't run even when load is rescaled. Don't know what's going on
+
+wtots.mod2<-glmer(cbind(tot.died,num.ecl)~temp.avg*temp.var*resc.ld+(1|bug.id),
+                family=binomial,
+                data=tv.para,
+                na.action = na.omit,
+                control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+
+
+anova(wtots.mod2,test="F")
+summary(wtots.mod2)
+
+```
+
+
+However, I can run a model only looking at survival to emergence, I'm assuming since some hosts had wasp larvae that emerged.
+
+```{r}
+#modelling wasp survival to emergence   This model runs!
+wems.mod1<-glmer(cbind(num.unem,num.em)~temp.avg*temp.var*resc.ld+(1|bug.id),
+                 family=binomial,
+                 data=tv.para,
+                 na.action=na.omit,
+                 control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+
+anova(wems.mod1)
+summary(wems.mod1)
+```
+
+
+I run into similar problems when I analyze wasp development time to emergence and eclosion (I had to take this out of a code chunk or the Rmarkdown wouldn't knit):
+
+
+Making a linear mixed effect model for wasp total development time
+  random effect==random intercept of individual
+   temp.avg==factor, temp.var==numeric, resc.load==numeric, mongos treated as NAs
+
+
+wdtot.mod1<-lme(waspdev.tot~temp.avg*temp.var*resc.ld,
+                random=~1|bug.id,
+                data=tv.para,
+                na.action=na.omit,
+                method="ML")
+
+anova(wdtot.mod1)
+summary(wdtot.mod1)
+
+
+```{r}
+#Making a linear mixed effect model for wasp internal development time
+  ##random effect==random intercept of individual
+    ###temp.avg==factor, temp.var==numeric, resc.load==numeric, mongos treated as NAs 
+
+wdint.mod1<-lme(waspdev.int~temp.avg*temp.var*load,
+               random=~1|bug.id,
+               data=tv.para,
+               na.action = na.omit,
+               method="ML")
+
+anova(wdint.mod1)
+summary(wdint.mod1)
+
+```
+
+
+
+My main questions are:
+
+Should I continue to remove the +/-5 treatment, or try to find a model that incorporates it?
+
+How do I appropriately model wasp development and survival to eclosion? My models run as a glm, but have very high overdispersion. Is that acceptable? Or should I try and find a mixed effect model that works?
+
+How should I deal with my hosts without wasp emergence (mongos)? Is it appropriate to have them as 0s? I don't have load data for any of them, as they did not have wasp larvae develop. Or should they be NAs since they don't have wasp larvae, and are quite different from normal hosts?

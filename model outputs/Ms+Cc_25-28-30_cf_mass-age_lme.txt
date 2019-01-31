@@ -1,0 +1,233 @@
+Ms+Cc_25-28-30_cf
+
+Caterpillar mass and age model
+	-linear mixed effect model
+	-random effect==age|individual
+	-temp.avg and treat==factor
+	-temp.var==numeric (otherwise model won't run...ask Joel)
+	-fixed effect of temp.avg to account for effect of rearing temp on mass at 3rd
+	also ask Joel about this--some temps go to fluc at hatch, others at 3rd (30)
+
+
+lms.mod1<-lme(log.mass~(day.age+I(day.age^2)):(temp.avg*temp.var.num*treatment)+temp.avg,
+             random=~day.age|bug.id,
+             data=tv.long,
+             na.action=na.omit,
+             method="ML")
+
+
+
+---------------------------------------------------------------------------------------
+
+
+> anova(lms.mod1)
+                                             numDF denDF  F-value p-value
+(Intercept)                                      1  1223 57008.27  <.0001
+temp.avg                                         2   444    39.71  <.0001
+day.age:temp.avg                                 3  1223  6179.22  <.0001
+day.age:temp.var.num                             1  1223   138.49  <.0001
+day.age:treatment                                1  1223   545.29  <.0001
+I(day.age^2):temp.avg                            3  1223   249.39  <.0001
+I(day.age^2):temp.var.num                        1  1223     0.76  0.3820
+I(day.age^2):treatment                           1  1223   173.06  <.0001
+day.age:temp.avg:temp.var.num                    2  1223     7.82  0.0004
+day.age:temp.avg:treatment                       2  1223     9.34  0.0001
+day.age:temp.var.num:treatment                   1  1223     5.39  0.0204
+I(day.age^2):temp.avg:temp.var.num               2  1223     2.23  0.1082
+I(day.age^2):temp.avg:treatment                  2  1223     3.34  0.0358
+I(day.age^2):temp.var.num:treatment              1  1223    26.73  <.0001
+day.age:temp.avg:temp.var.num:treatment          2  1223     0.54  0.5830
+I(day.age^2):temp.avg:temp.var.num:treatment     2  1223     6.63  0.0014
+
+
+
+------------------------------------------------------------------------------------------
+
+
+
+> summary(lms.mod1)
+Linear mixed-effects model fit by maximum likelihood
+ Data: tv.long 
+       AIC      BIC    logLik
+  1945.121 2113.602 -941.5606
+
+Random effects:
+ Formula: ~day.age | bug.id
+ Structure: General positive-definite, Log-Cholesky parametrization
+            StdDev     Corr  
+(Intercept) 0.21204814 (Intr)
+day.age     0.04183315 -0.1  
+Residual    0.29762637       
+
+Fixed effects: log.mass ~ (day.age + I(day.age^2)):(temp.avg * temp.var.num *      treatment) + temp.avg 
+                                                        Value  Std.Error   DF   t-value p-value
+(Intercept)                                         1.5810256 0.07974313 1223 19.826481  0.0000
+temp.avg28                                         -0.1114396 0.12333019  444 -0.903587  0.3667
+temp.avg30                                          0.4263151 0.09474375  444  4.499665  0.0000
+day.age:temp.avg25                                  0.5311977 0.02580087 1223 20.588366  0.0000
+day.age:temp.avg28                                  0.5833257 0.02962347 1223 19.691336  0.0000
+day.age:temp.avg30                                  0.5935548 0.03017872 1223 19.667994  0.0000
+day.age:temp.var.num                               -0.0104953 0.00894545 1223 -1.173259  0.2409
+day.age:treatmentpara                              -0.0286995 0.02793481 1223 -1.027373  0.3044
+I(day.age^2):temp.avg25                            -0.0024540 0.00128525 1223 -1.909349  0.0565
+I(day.age^2):temp.avg28                            -0.0035640 0.00153047 1223 -2.328734  0.0200
+I(day.age^2):temp.avg30                            -0.0027460 0.00178824 1223 -1.535596  0.1249
+I(day.age^2):temp.var.num                          -0.0005433 0.00044854 1223 -1.211324  0.2260
+I(day.age^2):treatmentpara                         -0.0066765 0.00142172 1223 -4.696072  0.0000
+day.age:temp.avg28:temp.var.num                    -0.0000467 0.01316043 1223 -0.003550  0.9972
+day.age:temp.avg30:temp.var.num                     0.0084192 0.01558343 1223  0.540269  0.5891
+day.age:temp.avg28:treatmentpara                    0.1513369 0.04365577 1223  3.466596  0.0005
+day.age:temp.avg30:treatmentpara                    0.0468027 0.04416003 1223  1.059843  0.2894
+day.age:temp.var.num:treatmentpara                  0.0015053 0.01213879 1223  0.124010  0.9013
+I(day.age^2):temp.avg28:temp.var.num               -0.0009732 0.00066885 1223 -1.454987  0.1459
+I(day.age^2):temp.avg30:temp.var.num               -0.0014450 0.00086402 1223 -1.672436  0.0947
+I(day.age^2):temp.avg28:treatmentpara              -0.0086833 0.00244650 1223 -3.549253  0.0004
+I(day.age^2):temp.avg30:treatmentpara              -0.0031400 0.00251036 1223 -1.250796  0.2112
+I(day.age^2):temp.var.num:treatmentpara             0.0009496 0.00058476 1223  1.623901  0.1047
+day.age:temp.avg28:temp.var.num:treatmentpara      -0.0534333 0.01865907 1223 -2.863665  0.0043
+day.age:temp.avg30:temp.var.num:treatmentpara      -0.0221233 0.01964739 1223 -1.126016  0.2604
+I(day.age^2):temp.avg28:temp.var.num:treatmentpara  0.0033894 0.00094981 1223  3.568471  0.0004
+I(day.age^2):temp.avg30:temp.var.num:treatmentpara  0.0005480 0.00108134 1223  0.506779  0.6124
+ Correlation: 
+                                                   (Intr) tmp.28 tmp.30 d.:.25 dy.:.28 dy.:.30 dy.:.. dy.g:t
+temp.avg28                                         -0.647                                                   
+temp.avg30                                         -0.842  0.544                                            
+day.age:temp.avg25                                 -0.616  0.398  0.518                                     
+day.age:temp.avg28                                  0.000 -0.515  0.000  0.000                              
+day.age:temp.avg30                                  0.000  0.000 -0.207  0.000  0.000                       
+day.age:temp.var.num                                0.092 -0.059 -0.077 -0.762  0.000   0.000               
+day.age:treatmentpara                               0.036 -0.023 -0.030 -0.596  0.000   0.000   0.655       
+I(day.age^2):temp.avg25                             0.552 -0.357 -0.465 -0.865  0.000   0.000   0.631  0.505
+I(day.age^2):temp.avg28                             0.000  0.469  0.000  0.000 -0.879   0.000   0.000  0.000
+I(day.age^2):temp.avg30                             0.000  0.000  0.181  0.000  0.000  -0.838   0.000  0.000
+I(day.age^2):temp.var.num                          -0.149  0.097  0.126  0.669  0.000   0.000  -0.785 -0.538
+I(day.age^2):treatmentpara                         -0.066  0.043  0.056  0.516  0.000   0.000  -0.531 -0.798
+day.age:temp.avg28:temp.var.num                    -0.063  0.140  0.053  0.518 -0.568   0.000  -0.680 -0.445
+day.age:temp.avg30:temp.var.num                    -0.053  0.034  0.057  0.437  0.000  -0.712  -0.574 -0.376
+day.age:temp.avg28:treatmentpara                   -0.023 -0.058  0.019  0.381 -0.305   0.000  -0.419 -0.640
+day.age:temp.avg30:treatmentpara                   -0.023  0.015  0.017  0.377  0.000  -0.581  -0.414 -0.633
+day.age:temp.var.num:treatmentpara                 -0.010  0.006  0.008  0.526  0.000   0.000  -0.732 -0.901
+I(day.age^2):temp.avg28:temp.var.num                0.100 -0.223 -0.084 -0.449  0.538   0.000   0.526  0.361
+I(day.age^2):temp.avg30:temp.var.num                0.078 -0.050 -0.091 -0.347  0.000   0.628   0.407  0.279
+I(day.age^2):temp.avg28:treatmentpara               0.039  0.082 -0.032 -0.300  0.197   0.000   0.309  0.464
+I(day.age^2):temp.avg30:treatmentpara               0.038 -0.024 -0.034 -0.292  0.000   0.507   0.301  0.452
+I(day.age^2):temp.var.num:treatmentpara             0.027 -0.017 -0.023 -0.459  0.000   0.000   0.594  0.739
+day.age:temp.avg28:temp.var.num:treatmentpara       0.006  0.060 -0.005 -0.342  0.282   0.000   0.476  0.586
+day.age:temp.avg30:temp.var.num:treatmentpara       0.006 -0.004  0.003 -0.325  0.000   0.552   0.452  0.557
+I(day.age^2):temp.avg28:temp.var.num:treatmentpara -0.017 -0.093  0.014  0.283 -0.189   0.000  -0.366 -0.455
+I(day.age^2):temp.avg30:temp.var.num:treatmentpara -0.015  0.009  0.006  0.248  0.000  -0.482  -0.321 -0.400
+                                                   I(.^2):.25 I(d.^2):.28 I(d.^2):.30 I(d.^2):.. I(d.^2): dy.:.28:..
+temp.avg28                                                                                                          
+temp.avg30                                                                                                          
+day.age:temp.avg25                                                                                                  
+day.age:temp.avg28                                                                                                  
+day.age:temp.avg30                                                                                                  
+day.age:temp.var.num                                                                                                
+day.age:treatmentpara                                                                                               
+I(day.age^2):temp.avg25                                                                                             
+I(day.age^2):temp.avg28                             0.000                                                           
+I(day.age^2):temp.avg30                             0.000      0.000                                                
+I(day.age^2):temp.var.num                          -0.836      0.000       0.000                                    
+I(day.age^2):treatmentpara                         -0.665      0.000       0.000       0.691                        
+day.age:temp.avg28:temp.var.num                    -0.429      0.471       0.000       0.534      0.361             
+day.age:temp.avg30:temp.var.num                    -0.362      0.000       0.578       0.451      0.305    0.390    
+day.age:temp.avg28:treatmentpara                   -0.323      0.256       0.000       0.344      0.511    0.598    
+day.age:temp.avg30:treatmentpara                   -0.320      0.000       0.484       0.340      0.505    0.282    
+day.age:temp.var.num:treatmentpara                 -0.433      0.000       0.000       0.570      0.700    0.497    
+I(day.age^2):temp.avg28:temp.var.num                0.561     -0.650       0.000      -0.671     -0.464   -0.780    
+I(day.age^2):temp.avg30:temp.var.num                0.434      0.000      -0.766      -0.519     -0.359   -0.277    
+I(day.age^2):temp.avg28:treatmentpara               0.386     -0.304       0.000      -0.402     -0.581   -0.436    
+I(day.age^2):temp.avg30:treatmentpara               0.377      0.000      -0.633      -0.392     -0.566   -0.204    
+I(day.age^2):temp.var.num:treatmentpara             0.593      0.000       0.000      -0.754     -0.915   -0.404    
+day.age:temp.avg28:temp.var.num:treatmentpara       0.282     -0.224       0.000      -0.371     -0.455   -0.680    
+day.age:temp.avg30:temp.var.num:treatmentpara       0.268      0.000      -0.447      -0.352     -0.432   -0.307    
+I(day.age^2):temp.avg28:temp.var.num:treatmentpara -0.365      0.285       0.000       0.464      0.563    0.509    
+I(day.age^2):temp.avg30:temp.var.num:treatmentpara -0.321      0.000       0.595       0.408      0.495    0.218    
+                                                   dy.:.30:.. dy.:.28: dy.:.30: d.:..: I(d.^2):.28:.. I(d.^2):.30:..
+temp.avg28                                                                                                          
+temp.avg30                                                                                                          
+day.age:temp.avg25                                                                                                  
+day.age:temp.avg28                                                                                                  
+day.age:temp.avg30                                                                                                  
+day.age:temp.var.num                                                                                                
+day.age:treatmentpara                                                                                               
+I(day.age^2):temp.avg25                                                                                             
+I(day.age^2):temp.avg28                                                                                             
+I(day.age^2):temp.avg30                                                                                             
+I(day.age^2):temp.var.num                                                                                           
+I(day.age^2):treatmentpara                                                                                          
+day.age:temp.avg28:temp.var.num                                                                                     
+day.age:temp.avg30:temp.var.num                                                                                     
+day.age:temp.avg28:treatmentpara                    0.241                                                           
+day.age:temp.avg30:treatmentpara                    0.718      0.405                                                
+day.age:temp.var.num:treatmentpara                  0.420      0.576    0.570                                       
+I(day.age^2):temp.avg28:temp.var.num               -0.302     -0.481   -0.228   -0.382                              
+I(day.age^2):temp.avg30:temp.var.num               -0.800     -0.179   -0.593   -0.296  0.348                       
+I(day.age^2):temp.avg28:treatmentpara              -0.177     -0.810   -0.293   -0.407  0.567          0.209        
+I(day.age^2):temp.avg30:treatmentpara              -0.579     -0.289   -0.808   -0.396  0.263          0.737        
+I(day.age^2):temp.var.num:treatmentpara            -0.341     -0.473   -0.468   -0.782  0.506          0.391        
+day.age:temp.avg28:temp.var.num:treatmentpara      -0.273     -0.906   -0.371   -0.651  0.510          0.192        
+day.age:temp.avg30:temp.var.num:treatmentpara      -0.790     -0.356   -0.919   -0.618  0.236          0.630        
+I(day.age^2):temp.avg28:temp.var.num:treatmentpara  0.210      0.773    0.288    0.482 -0.640         -0.241        
+I(day.age^2):temp.avg30:temp.var.num:treatmentpara  0.635      0.256    0.754    0.423 -0.273         -0.793        
+                                                   I(d.^2):.28: I(d.^2):.30: I(.^2):..: d.:.28:..: d.:.30:..:
+temp.avg28                                                                                                   
+temp.avg30                                                                                                   
+day.age:temp.avg25                                                                                           
+day.age:temp.avg28                                                                                           
+day.age:temp.avg30                                                                                           
+day.age:temp.var.num                                                                                         
+day.age:treatmentpara                                                                                        
+I(day.age^2):temp.avg25                                                                                      
+I(day.age^2):temp.avg28                                                                                      
+I(day.age^2):temp.avg30                                                                                      
+I(day.age^2):temp.var.num                                                                                    
+I(day.age^2):treatmentpara                                                                                   
+day.age:temp.avg28:temp.var.num                                                                              
+day.age:temp.avg30:temp.var.num                                                                              
+day.age:temp.avg28:treatmentpara                                                                             
+day.age:temp.avg30:treatmentpara                                                                             
+day.age:temp.var.num:treatmentpara                                                                           
+I(day.age^2):temp.avg28:temp.var.num                                                                         
+I(day.age^2):temp.avg30:temp.var.num                                                                         
+I(day.age^2):temp.avg28:treatmentpara                                                                        
+I(day.age^2):temp.avg30:treatmentpara               0.329                                                    
+I(day.age^2):temp.var.num:treatmentpara             0.532        0.518                                       
+day.age:temp.avg28:temp.var.num:treatmentpara       0.702        0.258        0.509                          
+day.age:temp.avg30:temp.var.num:treatmentpara       0.251        0.730        0.483      0.402               
+I(day.age^2):temp.avg28:temp.var.num:treatmentpara -0.936       -0.319       -0.616     -0.781     -0.297    
+I(day.age^2):temp.avg30:temp.var.num:treatmentpara -0.288       -0.927       -0.541     -0.275     -0.797    
+                                                   I(.^2):.28:..:
+temp.avg28                                                       
+temp.avg30                                                       
+day.age:temp.avg25                                               
+day.age:temp.avg28                                               
+day.age:temp.avg30                                               
+day.age:temp.var.num                                             
+day.age:treatmentpara                                            
+I(day.age^2):temp.avg25                                          
+I(day.age^2):temp.avg28                                          
+I(day.age^2):temp.avg30                                          
+I(day.age^2):temp.var.num                                        
+I(day.age^2):treatmentpara                                       
+day.age:temp.avg28:temp.var.num                                  
+day.age:temp.avg30:temp.var.num                                  
+day.age:temp.avg28:treatmentpara                                 
+day.age:temp.avg30:treatmentpara                                 
+day.age:temp.var.num:treatmentpara                               
+I(day.age^2):temp.avg28:temp.var.num                             
+I(day.age^2):temp.avg30:temp.var.num                             
+I(day.age^2):temp.avg28:treatmentpara                            
+I(day.age^2):temp.avg30:treatmentpara                            
+I(day.age^2):temp.var.num:treatmentpara                          
+day.age:temp.avg28:temp.var.num:treatmentpara                    
+day.age:temp.avg30:temp.var.num:treatmentpara                    
+I(day.age^2):temp.avg28:temp.var.num:treatmentpara               
+I(day.age^2):temp.avg30:temp.var.num:treatmentpara  0.333        
+
+Standardized Within-Group Residuals:
+        Min          Q1         Med          Q3         Max 
+-4.17743952 -0.48543577  0.01321934  0.53232104  3.49759353 
+
+Number of Observations: 1694
+Number of Groups: 447 

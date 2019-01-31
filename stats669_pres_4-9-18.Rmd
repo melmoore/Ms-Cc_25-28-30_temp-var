@@ -1,0 +1,47 @@
+---
+title: "M. sexta and C. congregata under fluctuating temperatures-stats class presentation"
+author: "Liz"
+date: "April 9, 2018"
+output: html_document
+self_contained: no
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,include=FALSE}
+#Load libraries
+
+library(readr)
+library(plyr)
+library(ggplot2)
+library(Rmisc)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+library(cowplot)
+library(nlme)
+
+
+library(extrafont)
+
+```
+
+
+##Brief background:
+
+How temperature affects the interaction between parasitoid and host has not been well studied for the parasitic wasp *Cotesia congregata* and its host, the caterpillar *Manduca sexta*. Little is known about the thermal biology of the wasps in general, and much of what is known about *M. sexta* comes from studies using constant temperatures. In the past 5-10 years, it has been shown that conclusions drawn from the results of constant temperatures can be ill-suited for predicting the outcomes of more realistic fluctuating thermal regimes. This can have important impacts on trying to make predictions about the effects of temperature on field systems using data from laboratory studies done at constant temperatures.
+
+To examine the effects of temperature on the interaction between *C. congregata* and *M. sexta*, I conducted an experiment that looked at the effects of average temperature and temperature fluctuations on parasitized caterpillar growth, and wasp developmet and survival. 
+
+
+###Experimental set up:
+
+![Temperature treatments. Blue lines indicate constant temperatures, orange lines indicate a fluctating temperature around one of three average temperatures (25, 28 and 30C)](C:/Users/inkhorse/Documents/Manduca expts/Summer+Fall 2017/25.28.30 wasp temp var/temp-avg+temp-fluc_method_plot)
+
+
+
+
+
+

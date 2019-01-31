@@ -1,0 +1,64 @@
+> lms.mod1<-lme(log.mass~(day.age+I(day.age^2)):(temp.var+treatment+temp.avg)^2+temp.avg,
++              random=~day.age|bug.id,
++              data=tv.long.no5,
++              na.action=na.omit,
++              method="ML")
+> anova(lms.mod1)
+                                numDF denDF  F-value p-value
+(Intercept)                         1  1041 49466.23  <.0001
+temp.avg                            2   380    34.73  <.0001
+day.age:temp.var                    2  1041  8054.44  <.0001
+day.age:treatment                   1  1041   442.13  <.0001
+day.age:temp.avg                    2  1041     9.14  0.0001
+I(day.age^2):temp.var               2  1041   314.17  <.0001
+I(day.age^2):treatment              1  1041   141.49  <.0001
+I(day.age^2):temp.avg               2  1041    20.35  <.0001
+day.age:temp.var:treatment          1  1041     3.69  0.0551
+day.age:temp.var:temp.avg           2  1041     8.50  0.0002
+day.age:treatment:temp.avg          2  1041     7.10  0.0009
+I(day.age^2):temp.var:treatment     1  1041    22.43  <.0001
+I(day.age^2):temp.var:temp.avg      2  1041     3.12  0.0444
+I(day.age^2):treatment:temp.avg     2  1041     1.25  0.2862
+
+
+
+
+> summary(lms.mod1)
+Linear mixed-effects model fit by maximum likelihood
+ Data: tv.long.no5 
+       AIC      BIC    logLik
+  1652.346 1794.775 -799.1728
+
+Random effects:
+ Formula: ~day.age | bug.id
+ Structure: General positive-definite, Log-Cholesky parametrization
+            StdDev     Corr  
+(Intercept) 0.23310448 (Intr)
+day.age     0.04093424 -0.161
+Residual    0.29531110       
+
+Fixed effects: log.mass ~ (day.age + I(day.age^2)):(temp.var + treatment + temp.avg)^2 +      temp.avg 
+                                           Value  Std.Error   DF   t-value p-value
+(Intercept)                            1.5778620 0.07970517 1041 19.796233  0.0000
+temp.avg28                            -0.0708131 0.12276562  380 -0.576815  0.5644
+temp.avg30                             0.4132746 0.10114986  380  4.085765  0.0001
+day.age:temp.var0                      0.5083673 0.01901459 1041 26.735637  0.0000
+day.age:temp.var10                     0.5115266 0.01744132 1041 29.328432  0.0000
+day.age:treatmentpara                 -0.0029783 0.01474847 1041 -0.201941  0.8400
+day.age:temp.avg28                     0.0751441 0.02909434 1041  2.582775  0.0099
+day.age:temp.avg30                     0.0940970 0.02708015 1041  3.474760  0.0005
+I(day.age^2):temp.var0                -0.0023056 0.00089456 1041 -2.577352  0.0101
+I(day.age^2):temp.var10               -0.0046486 0.00073408 1041 -6.332461  0.0000
+I(day.age^2):treatmentpara            -0.0070209 0.00077213 1041 -9.092943  0.0000
+I(day.age^2):temp.avg28               -0.0037878 0.00138546 1041 -2.733933  0.0064
+I(day.age^2):temp.avg30               -0.0033454 0.00138814 1041 -2.410023  0.0161
+day.age:temp.var10:treatmentpara      -0.0412410 0.01567600 1041 -2.630836  0.0086
+day.age:temp.var10:temp.avg28         -0.0500486 0.01918578 1041 -2.608632  0.0092
+day.age:temp.var10:temp.avg30         -0.0129780 0.01905061 1041 -0.681236  0.4959
+day.age:treatmentpara:temp.avg28       0.0276400 0.01782813 1041  1.550356  0.1214
+day.age:treatmentpara:temp.avg30       0.0006768 0.01950135 1041  0.034707  0.9723
+I(day.age^2):temp.var10:treatmentpara  0.0041258 0.00083015 1041  4.969969  0.0000
+I(day.age^2):temp.var10:temp.avg28     0.0011215 0.00103531 1041  1.083273  0.2789
+I(day.age^2):temp.var10:temp.avg30    -0.0019190 0.00107103 1041 -1.791772  0.0735
+I(day.age^2):treatmentpara:temp.avg28 -0.0004861 0.00086454 1041 -0.562261  0.5741
+I(day.age^2):treatmentpara:temp.avg30 -0.0017100 0.00108041 1041 -1.582713  0.1138

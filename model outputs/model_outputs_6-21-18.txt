@@ -1,0 +1,95 @@
+> lms.mod1<-lme(log.mass~(day.age+I(day.age^2)):(temp.var+treatment+temp.avg)^2+temp.avg,
++              random=~day.age|bug.id,
++              data=tv.long.no5,
++              na.action=na.omit,
++              method="ML")
+> anova(lms.mod1)
+                                numDF denDF  F-value p-value
+(Intercept)                         1  1041 49466.23  <.0001
+temp.avg                            2   380    34.73  <.0001
+day.age:temp.var                    2  1041  8054.44  <.0001
+day.age:treatment                   1  1041   442.13  <.0001
+day.age:temp.avg                    2  1041     9.14  0.0001
+I(day.age^2):temp.var               2  1041   314.17  <.0001
+I(day.age^2):treatment              1  1041   141.49  <.0001
+I(day.age^2):temp.avg               2  1041    20.35  <.0001
+day.age:temp.var:treatment          1  1041     3.69  0.0551
+day.age:temp.var:temp.avg           2  1041     8.50  0.0002
+day.age:treatment:temp.avg          2  1041     7.10  0.0009
+I(day.age^2):temp.var:treatment     1  1041    22.43  <.0001
+I(day.age^2):temp.var:temp.avg      2  1041     3.12  0.0444
+I(day.age^2):treatment:temp.avg     2  1041     1.25  0.2862
+
+
+> wdint.mod1d<-lme(waspdev.int~temp.avg+temp.var+
++                    temp.avg:temp.var,
++                  random=~1|bug.id,
++                  data=tv.para,
++                  na.action = na.omit,
++                  method="ML")
+> anova(wdint.mod1d)
+                  numDF denDF   F-value p-value
+(Intercept)           1   170 22831.203  <.0001
+temp.avg              2   170    12.657  <.0001
+temp.var              1   170   491.165  <.0001
+temp.avg:temp.var     2   170    81.217  <.0001
+> wtots.mod1<-glm(cbind(tot.died,num.ecl)~temp.avg*temp.var*load,
++                 family=quasibinomial,
++                 data=tv.para,
++                 na.action = na.omit)
+> anova(wtots.mod1,test="F")
+Analysis of Deviance Table
+
+Model: quasibinomial, link: logit
+
+Response: cbind(tot.died, num.ecl)
+
+Terms added sequentially (first to last)
+
+
+                       Df Deviance Resid. Df Resid. Dev        F    Pr(>F)    
+NULL                                     175     6693.4                       
+temp.avg                2   3248.2       173     3445.2 121.8773 < 2.2e-16 ***
+temp.var                1    444.0       172     3001.2  33.3171 3.817e-08 ***
+load                    1      8.2       171     2993.0   0.6156    0.4338    
+temp.avg:temp.var       2    668.2       169     2324.8  25.0733 3.154e-10 ***
+temp.avg:load           2      8.8       167     2316.0   0.3295    0.7198    
+temp.var:load           1     26.5       166     2289.5   1.9890    0.1603    
+temp.avg:temp.var:load  2      0.5       164     2289.0   0.0186    0.9816    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+> summary(wtots.mod1)
+
+Call:
+glm(formula = cbind(tot.died, num.ecl) ~ temp.avg * temp.var * 
+    load, family = quasibinomial, data = tv.para, na.action = na.omit)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-9.5816  -2.3026   0.3708   2.3452  13.1533  
+
+Coefficients:
+                             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                -5.459e-01  2.713e-01  -2.012 0.045814 *  
+temp.avg28                  8.257e-01  4.717e-01   1.750 0.081918 .  
+temp.avg30                  2.678e+00  6.844e-01   3.913 0.000133 ***
+temp.var10                  7.969e-01  4.327e-01   1.842 0.067318 .  
+load                        1.951e-03  1.693e-03   1.152 0.251008    
+temp.avg28:temp.var10       2.551e+00  1.534e+00   1.663 0.098313 .  
+temp.avg30:temp.var10       1.501e+01  3.689e+03   0.004 0.996758    
+temp.avg28:load            -3.522e-03  4.010e-03  -0.878 0.381084    
+temp.avg30:load             9.676e-04  5.031e-03   0.192 0.847744    
+temp.var10:load            -4.495e-03  3.172e-03  -1.417 0.158396    
+temp.avg28:temp.var10:load  2.958e-03  1.525e-02   0.194 0.846473    
+temp.avg30:temp.var10:load  1.505e-02  4.984e+01   0.000 0.999759    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for quasibinomial family taken to be 13.32585)
+
+    Null deviance: 6693.4  on 175  degrees of freedom
+Residual deviance: 2289.0  on 164  degrees of freedom
+  (44 observations deleted due to missingness)
+AIC: NA
+
+Number of Fisher Scoring iterations: 14
