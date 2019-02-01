@@ -52,6 +52,8 @@ tv.long$all.trt<-gsub(".control",".c",tv.long$all.trt)
 tv.long.no5<-subset(tv.long,all.trt!="30.5.p")
 tv.long.no5<-subset(tv.long.no5,all.trt!="30.5.c")
 
+#Making a subset without field caterpillars
+tv.long.wof<-subset(tv.long, pop=="lab")
 
 
 #Wide dataset
@@ -63,6 +65,9 @@ tv$all.trt<-gsub(".control",".c",tv$all.trt)
 
 tv.ab<-subset(tv,all.trt!="30.5.p")
 tv.ab<-subset(tv.ab,all.trt!="30.5.c")
+
+#Making a subset without field caterpillars
+tv.wof<-subset(tv, pop=="lab")
 
 
 #-----------------------------------
@@ -130,6 +135,79 @@ amass.plot+geom_point(aes(shape=treatment),size=5
         legend.text = element_text(size=16),
         legend.title = element_text(size=16),
         legend.position = c(.85, .25))
+
+
+#----------------------------------
+
+#plotting caterpillar mass and age without field caterpillar data (for comparison)
+  ##doesn't seem to make that much difference, decreases sample sizes in 30 treatments
+  ##keep in mind for analyses and for manuscript--may just remove for simplicity
+
+#PLOTTING HOST CATERPILLAR MASS X AGE (+/- 5 group included)
+
+
+amass.wof.sum<-summarySE(tv.long.wof,measurevar = "log.mass",
+                     groupvar=c("treatment","temp.avg","temp.var","instar"),
+                     na.rm=TRUE)
+
+amass.wof.sum
+
+
+#removing end day.age for those without wasp emergence at 30.10.p
+tv.long.nomwof<-tv.long.wof
+tv.long.nomwof$suc.ovp[is.na(tv.long.nomwof$suc.ovp)]<-0
+tv.long.nomwof$end.use<-ifelse(tv.long.nomwof$instar=="end" & tv.long.nomwof$all.trt=="30.10.p" & tv.long.nomwof$suc.ovp=="0",0,1)
+tv.long.nomwof$suc.ovp[(tv.long.nomwof$suc.ovp)==0]<-NA
+tv.long.nomwof<-subset(tv.long.nomwof,end.use==1)
+
+
+dagem.wof.sum<-summarySE(tv.long.nomwof,measurevar = "day.age",
+                     groupvar=c("treatment","temp.avg","temp.var","instar"),
+                     na.rm=TRUE)
+
+
+dagem.wof.sum
+
+
+amass.wof.sum$day.age<-dagem.wof.sum[,6]
+amass.wof.sum$dage.se<-dagem.wof.sum[,8]
+
+
+amass.wof.plot<-ggplot(amass.wof.sum,aes(x=day.age,y=log.mass,
+                                 group=interaction(temp.var,treatment),color=temp.var))
+amass.wof.plot+geom_point(aes(shape=treatment),size=5
+)+geom_line(aes(linetype=treatment),size=1.7
+)+geom_errorbar(aes(ymin=log.mass-se,ymax=log.mass+se),width=1.2,size=1
+)+geom_errorbarh(aes(xmin=day.age-dage.se,xmax=day.age+dage.se), height=.4, size=1    
+)+scale_color_manual(values=c("#56B4E9","#000000","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","5","10"),labels=c("0","5","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
+                        breaks=c("control","para"),labels=c("Cotrol","Parasitized"),
+                        guide=guide_legend(keywidth = 2.5)
+)+scale_shape_manual(values = c(16,17),name="Treatment",
+                     breaks=c("control","para"),labels=c("Cotrol","Parasitized"),
+                     guide=guide_legend(keywidth = 2.5)
+)+labs(x="Age [days]",y="Log(Mass) [mg]"
+)+facet_wrap(~temp.avg
+)+theme(text = element_text(family=("Cambria")),
+        strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.85, .25))
+
+
 
 
 
