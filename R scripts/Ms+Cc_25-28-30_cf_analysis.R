@@ -86,6 +86,20 @@ anova(lms.mod2)
 summary(lms.mod2)
 
 
+#trying model of just para treatments with load
+
+tv.long.para<-subset(tv.long.no5, treatment=="para")
+
+lms.mod2<-lme(log.mass~(day.age+I(day.age^2)):(temp.var+load+temp.avg)^2+temp.avg,
+              random=~day.age|bug.id,
+              data=tv.long.para,
+              na.action=na.omit,
+              method="ML",
+              control = lmeControl(opt='optim'))
+
+anova(lms.mod2)
+summary(lms.mod2)
+
 #---------------------------
 
 #MODELLING MASS AT END OF DEV (WAND OR EM)
@@ -147,7 +161,7 @@ tv.para$load[tv.para$load==0]<-NA
     ###overdispersion is high, should add random effect of individual-James says this is fine for now, due to problems with
     ###running the glmer (conversion problems due to multiple issues--see lab notebook)
 
-wtots.mod1<-glm(cbind(num.ecl,tot.died)~temp.avg*temp.var*load,
+wtots.mod1<-glm(cbind(num.ecl,tot.died)~temp.avg*temp.var*resc.ld,
                 family=quasibinomial,
                 data=tv.para,
                 na.action = na.omit)

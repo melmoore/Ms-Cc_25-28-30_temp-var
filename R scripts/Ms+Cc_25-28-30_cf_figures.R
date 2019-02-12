@@ -404,4 +404,25 @@ emsecl.plot+geom_point(aes(shape=temp.avg),size=5
 
 
 
+#-----------------------
+
+#plotting wasp survival to emergence and eclosion by load
+
+tv.para$percem<-tv.para$num.em/tv.para$load
+
+tv.para$percem[is.nan(tv.para$percem)]<-NA
+
+emload.plot<-ggplot(tv.para, aes(x=load, y=percem, color=temp.var))
+emload.plot+geom_point(
+)+geom_smooth(method=lm, se=FALSE
+)+facet_wrap(~temp.avg)
+
+#survival to eclosion
+eclload.plot<-ggplot(tv.para, aes(x=load, y=tot.surv, color=temp.var))
+eclload.plot+geom_point(
+)+geom_smooth(method=lm, se=FALSE
+)+facet_wrap(~temp.avg)
+
+
+
 
