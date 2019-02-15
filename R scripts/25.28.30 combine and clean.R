@@ -138,6 +138,8 @@ hill$date.wand.j[(hill$date.wand.j=="0")]<-NA
 hill.nhs<-subset(hill, hs=="C")
 
 
+#making a null "comments" column for hill--want to keep mem comments column to use the notes 
+hill.nhs$comments<-NA
 
 #Making both data sets have the same number/name of columns:
 
@@ -145,7 +147,7 @@ hill.nhs<-subset(hill, hs=="C")
 keepvars<-c("bug.id","temp.avg","temp.var","treatment","mass.3","mass.4","mass.5","mass.wand","mass.48em","num.ovp","suc.ovp","instar.em","bled.em","num.em",
             "num.coc","num.fail.spin","num.ecl","num.unem","load","date.laid.j","date.hatch.j","date.died.j","date.3.j","date.4.j","date.5.j","date.wand.j","date.ovp.j","date.em.j","date.ecl.j",
             "waspdev.tot","waspdev.int","stsp.llsurv","stsp.pupsurv","tot.elsurv","tot.llsurv","tot.surv",
-            "timeto3","timeto4","timeto5","int3","int4","ttwand","ttem","date.coll.j","coll.loc","pop","diet")
+            "timeto3","timeto4","timeto5","int3","int4","ttwand","ttem","date.coll.j","coll.loc","pop","diet", "comments")
 
 hill.keep<-hill.nhs[keepvars]
 mem.keep<-mem[keepvars]
@@ -203,26 +205,18 @@ tv.para$use.30f10<-ifelse(tv.para$temp.avg=="30" & tv.para$temp.var=="10",
                                    tv.para$date.wand.j>0,1,0),0)
 
 
-#Logical ifelse statements for each temp.avg and temp.var group, creating a binary column for each
-#If date died == 0 (did not die), put a 1. If not, (cat died, has julian date), put a 0
 
-tv.para$use.28c<-ifelse(tv.para$temp.avg=="28" & tv.para$temp.var=="0" & tv.para$date.died.j=="0",1,0)
-tv.para$use.28f<-ifelse(tv.para$temp.avg=="28" & tv.para$temp.var=="10" & tv.para$date.died.j=="0",1,0)
-tv.para$use.25c<-ifelse(tv.para$temp.avg=="25" & tv.para$temp.var=="0" & tv.para$date.died.j=="0",1,0)
-tv.para$use.25f<-ifelse(tv.para$temp.avg=="25" & tv.para$temp.var=="10" & tv.para$date.died.j=="0",1,0)
-tv.para$use.30c<-ifelse(tv.para$temp.avg=="30" & tv.para$temp.var=="0" & tv.para$date.died.j=="0",1,0)
-tv.para$use.30f<-ifelse(tv.para$temp.avg=="30" & tv.para$temp.var=="5" & tv.para$date.died.j=="0",1,0)
+#Create a "keep" column with 1 if an individual should be kept (has a 0 in the date.died.j column or a 
+ ## 1 in the use.30f10 column) or a 0 if it should be discarded (has a date.died.j > 0, and a 0 in the 
+  ##use.30f10 column)
 
-#creating a final use column to sort all data with: if any of the other use columns have a 1, put a 1 in this column
-#if none of the other columns have a 1, put a 0
-
-tv.para$use<-ifelse(tv.para$use.30f10=="1" | tv.para$use.28c=="1" | tv.para$use.28f=="1" | tv.para$use.25c=="1" |
-                      tv.para$use.25f=="1" | tv.para$use.30c=="1" | tv.para$use.30f=="1",1,0)
+tv.para$keep<-ifelse(tv.para$date.died.j>0 & tv.para$use.30f10==0, 0, 1)
 
 
-#Comparing relevant columns to double check everything worked
+#subset tv.para to only individuals with a 1 in the keep column
 
-test<-tv.para[,c(1,2,3,22,50,51:57)]
+tv.para<-subset(tv.para, keep==1)
+
 
 
 #Subset by treatment
@@ -234,50 +228,23 @@ tv.con<-subset(tv,treatment=="control")
 
 tv.con$date.died.j[is.na(tv.con$date.died.j)] <- 0
 
+#subset to only individuals that did not die during experiment
+tv.con<-subset(tv.con, date.died.j==0)
 
-#Logical ifelse statements for each temp.avg and temp.var group, creating a binary column for each
-#If date died == 0 (did not die), put a 1. If not, (cat died, has julian date), put a 0
-
-tv.con$use.28c<-ifelse(tv.con$temp.avg=="28" & tv.con$temp.var=="0" & tv.con$date.died.j=="0",1,0)
-tv.con$use.28f<-ifelse(tv.con$temp.avg=="28" & tv.con$temp.var=="10" & tv.con$date.died.j=="0",1,0)
-tv.con$use.25c<-ifelse(tv.con$temp.avg=="25" & tv.con$temp.var=="0" & tv.con$date.died.j=="0",1,0)
-tv.con$use.25f<-ifelse(tv.con$temp.avg=="25" & tv.con$temp.var=="10" & tv.con$date.died.j=="0",1,0)
-tv.con$use.30c<-ifelse(tv.con$temp.avg=="30" & tv.con$temp.var=="0" & tv.con$date.died.j=="0",1,0)
-tv.con$use.30f<-ifelse(tv.con$temp.avg=="30" & tv.con$temp.var=="5" & tv.con$date.died.j=="0",1,0)
-tv.con$use.30f10<-ifelse(tv.con$temp.avg=="30" & tv.con$temp.var=="10" & tv.con$date.died.j=="0",1,0)
-
-
-#creating a final use column to sort all data with: if any of the other use columns have a 1, put a 1 in this column
-#if none of the other columns have a 1, put a 0
-
-tv.con$use<-ifelse(tv.con$use.28c=="1" | tv.con$use.28f=="1" | tv.con$use.25c=="1" | tv.con$use.25f=="1" |
-                     tv.con$use.30c=="1" | tv.con$use.30f=="1" | tv.con$use.30f10=="1",1,0)
-                     
-
+#create dummy columns to match tv.para
+tv.con$use.30f10<-NA
+tv.con$keep<-1
 
 #rbind the subsetted data sets (with new use columns) back into 1 dataset
 
 tv<-rbind(tv.con,tv.para)                     
 
 
-#Look at relevant columns to double check things worked
-
-test.tv<-tv[,c(1,2,3,22,24,25,48,50,51,52,53,54,55,56,57)]              
-
-
 #set extraneous use columns to NULL to get rid of them
-                     
-tv$use.25c<-NULL
-tv$use.25f<-NULL
-tv$use.28c<-NULL
-tv$use.28f<-NULL
-tv$use.30c<-NULL
-tv$use.30f<-NULL
 tv$use.30f10<-NULL
-
+tv$keep<-NULL
 
 #Revert 0s back to NAs
-
 tv$date.5.j[(tv$date.5.j=="0")] <- NA
 tv$date.died.j[(tv$date.died.j=="0")] <- NA
 tv$date.em.j[(tv$date.em.j=="0")] <- NA
@@ -380,6 +347,13 @@ tv$tot.llsurv[is.nan(tv$tot.llsurv)] = 0
 tv$tot.surv[is.nan(tv$tot.surv)] = 0
 
 
+
+#making a "wander" column for all individuals that wandered, including parasitized individuals--finding this
+  ##data in the comments column
+
+tv$wander<-ifelse(grepl("wander", tv$comments) | tv$date.wand.j>0, 1, 0)
+
+
 #Making control and suc.ovp==0 individuals have NAs for wasp metrics
 
 #Make date.wand NAs == 0
@@ -422,42 +396,10 @@ tv$mass.end<-coalesce(tv$mass.48em,tv$mass.wand)
 
 
 
-#Subset whole data frame by the use column--data should now be clean (ish)
 
-tv.cl<-subset(tv,use=="1")
-
-View(tv.cl)
-
-
-#Removing para caterpillars that have a suc.ovp==0 (were not successfully parasitized)
-
-#Make NAs==0 so ifelse will work
-tv.cl$suc.ovp[is.na(tv.cl$suc.ovp)]<-0
-tv.cl$mass.wand[is.na(tv.cl$mass.wand)]<-0
-tv.cl$date.em.j[is.na(tv.cl$date.em.j)]<-0
-
-#Make an ifelse statement that will put a 1.5 if treatment==control or mass.wand==0 and date.em.j==0, 
-#leave else as is
-
-tv.cl$suc.ovp<-ifelse(tv.cl$treatment=="control" | tv.cl$mass.wand==0 & tv.cl$date.em.j==0, 1.5, tv.cl$suc.ovp)
-
-
-#Remove suc.ovp==0
-
-tv.cl<-subset(tv.cl,suc.ovp!=0)
-
-
-#Turn suc.ovp that == 1.5 back to NA, return NA's to other relevant columns
-
-tv.cl$suc.ovp[tv.cl$suc.ovp==1.5]<-NA
-tv.cl$mass.wand[tv.cl$mass.wand==0]<-NA
-tv.cl$date.em.j[tv.cl$date.em.j==0]<-NA
-
-
-#Write csv's
-
-write.csv(tv,"25-28-30_tv-final_ed.csv",row.names = FALSE)
-write.csv(tv.cl,"25-28-30_tv-final_clean.csv",row.names=FALSE)
+#Write csv (remember that field indv. and para that wandered are left in this data set! Will need to alter
+  ##some code for analysis and figures)
+write.csv(tv,"25-28-30_tv-final_clean.csv",row.names=FALSE)
 
 
 
@@ -466,7 +408,7 @@ write.csv(tv.cl,"25-28-30_tv-final_clean.csv",row.names=FALSE)
 
 #Gathering development time
 
-test.long<-gather(tv.cl,instar,day.age,timeto3,timeto4,timeto5,ttend)
+test.long<-gather(tv,instar,day.age,timeto3,timeto4,timeto5,ttend)
 View(test.long)
 
 #Whittling down to only necessary columns (for merging later), and renaming instar levels
@@ -477,17 +419,17 @@ test.long1$instar<- gsub("tt", "",test.long1$instar)
 
 #Gathering mass data
 
-test.long2<-gather(tv.cl,instar,mass,mass.3,mass.4,mass.5,mass.end)
+test.long2<-gather(tv,instar,mass,mass.3,mass.4,mass.5,mass.end)
 test.long2$instar<-gsub("mass.","",test.long2$instar)
 
 #Merging the two long data sets by id, treatments and instar
 
-tv.cl.long<-merge(test.long1,test.long2,by=c("bug.id","treatment","temp.avg","temp.var","instar"))
+tv.long<-merge(test.long1,test.long2,by=c("bug.id","treatment","temp.avg","temp.var","instar"))
 
 
 
 
-write.csv(tv.cl.long,"25-28-30_tv-final_clean_LONG.csv",row.names=FALSE)
+write.csv(tv.long,"25-28-30_tv-final_clean_LONG.csv",row.names=FALSE)
 
 
 

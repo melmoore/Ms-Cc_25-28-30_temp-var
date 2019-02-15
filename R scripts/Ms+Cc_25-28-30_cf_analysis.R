@@ -397,7 +397,7 @@ anova(wdint.mod1, wdint.mod1a, wdint.mod1b, wdint.mod1c, wdint.mod1d)
 
 wdtot.mod1<-lme(waspdev.tot~temp.avg*temp.var*resc.ld,
                 random=~1|bug.id,
-                data=tv.para.no10,
+                data=tv.para,
                 na.action=na.omit,
                 method="ML")
 
@@ -405,6 +405,11 @@ anova(wdtot.mod1)
 summary(wdtot.mod1)
 
 
+#trying a non-mixed effects model
 
+wdtot.mod2<-lm(waspdev.tot~temp.avg*temp.var*resc.ld,
+               data=tv.para,
+               na.action = na.omit)
 
+anova(wdtot.mod2)
 
