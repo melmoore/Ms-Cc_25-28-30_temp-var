@@ -11,6 +11,8 @@ library(lmerTest)
 library(ggplot2)
 
 
+#----------------------
+
 
 #load data
 
@@ -124,6 +126,18 @@ lmend.mod2<-lm(lmend~temp.avg*temp.var*treatment,
 
 anova(lmend.mod2)
 summary(lmend.mod2)
+
+
+#looking for only para, with load as fixed effect
+
+tv.para<-subset(tv.no5, treatment=="para")
+
+lmend.mod3<-lm(lmend~temp.avg*temp.var*load,
+               data=tv.para,
+               na.action = na.omit)
+
+anova(lmend.mod3)
+
 
 
 #-------------------------------------------------------------------------------------------------------------------------------
@@ -308,6 +322,64 @@ anova(wems.mod1, wems.mod.TAV, test="chi")
 anova(wems.mod1, wems.mod.TAL, test="chi")
 anova(wems.mod1, wems.mod.TVL, test="chi")
 anova(wems.mod1, wems.mod.TATVL, test="chi")
+
+#------------------------------------
+
+#looking at effects of load, by separating data into 25 and 28 mean temps to try and get rid of 30+/-10 effects
+
+#Making a column for total died (load-num.ecl)
+
+tv$tot.died<-tv$load-tv$num.ecl
+
+tv$resc.ld<-rescale(tv$load,to=c(0,1))
+
+
+tv.low<-subset(tv, temp.avg!=30 & treatment=="para")
+tv.high<-subset(tv, temp.avg==30 & treatment=="para")
+
+wsload.mod1<-glmer(cbind(num.ecl, tot.died)~temp.avg*temp.var*resc.ld + (1|bug.id),
+                 family = binomial,
+                 data=tv.low,
+                 na.action=na.omit,
+                 control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+
+anova(wsload.mod1)
+summary(wsload.mod1)
+
+
+wsload.mod2<-glmer(cbind(num.ecl, tot.died)~temp.var*resc.ld + (1|bug.id),
+                   family = binomial,
+                   data=tv.high,
+                   na.action=na.omit,
+                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+
+anova(wsload.mod2)
+summary(wsload.mod2)
+
+
+
+wemsload.mod1<-glmer(cbind(num.em, num.unem)~temp.avg*temp.var*resc.ld + (1|bug.id),
+                   family = binomial,
+                   data=tv.low,
+                   na.action=na.omit,
+                   control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+
+anova(wemsload.mod1)
+summary(wemsload.mod1)
+
+
+
+
+wemsload.mod2<-glmer(cbind(num.em, num.unem)~temp.var*resc.ld + (1|bug.id),
+                     family = binomial,
+                     data=tv.high,
+                     na.action=na.omit,
+                     control=glmerControl(optimizer="bobyqa", optCtrl=list(maxfun=100000)))
+
+anova(wemsload.mod2)
+summary(wemsload.mod2)
+
+
 
 
 #---------------------------------------------------------------------------------------
