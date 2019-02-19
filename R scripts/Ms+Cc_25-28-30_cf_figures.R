@@ -11,6 +11,7 @@ library(dplyr)
 library(tidyr)
 library(reshape2)
 library(cowplot)
+library(viridis)
 
 
 #load data
@@ -408,21 +409,128 @@ emsecl.plot+geom_point(aes(shape=temp.avg),size=5
 
 #plotting wasp survival to emergence and eclosion by load
 
-tv.para$percem<-tv.para$num.em/tv.para$load
+tv.para.wof<-subset(tv.para, pop=="lab")
 
-tv.para$percem[is.nan(tv.para$percem)]<-NA
+tv.para.wof$percem<-tv.para.wof$num.em/tv.para.wof$load
 
-emload.plot<-ggplot(tv.para, aes(x=load, y=percem, color=temp.var))
+tv.para.wof$percem[is.nan(tv.para.wof$percem)]<-NA
+
+emload.plot<-ggplot(tv.para.wof, aes(x=load, y=percem, color=temp.var))
 emload.plot+geom_point(
 )+geom_smooth(method=lm, se=FALSE
 )+facet_wrap(~temp.avg)
 
 #survival to eclosion
-eclload.plot<-ggplot(tv.para, aes(x=load, y=tot.surv, color=temp.var))
+eclload.plot<-ggplot(tv.para.wof, aes(x=load, y=tot.surv, color=temp.var))
 eclload.plot+geom_point(
 )+geom_smooth(method=lm, se=FALSE
 )+facet_wrap(~temp.avg)
 
 
+#---------------------
 
+#plotting load effects on host mass by binning load into bins of 50 (?)
+
+tv.lp.wof<-subset(tv.long, treatment=="para" & pop=="lab")
+
+#subset out the unsuc ovp
+tv.lp.wof<-subset(tv.lp.wof, suc.ovp==1)
+
+range(tv.lp.wof$load)
+
+#Making a column "bin" that puts hosts into bins determined by load, binned by 50
+
+tv.lp.wof$bin<-ifelse(tv.lp.wof$load<=50 & tv.lp.wof$load!=0, 50,
+                      ifelse(tv.lp.wof$load>50 & tv.lp.wof$load<=100, 100,
+                             ifelse(tv.lp.wof$load>100 & tv.lp.wof$load<=150, 150,
+                                    ifelse(tv.lp.wof$load>150 & tv.lp.wof$load<=200, 200,
+                                           ifelse(tv.lp.wof$load>200 & tv.lp.wof$load<=250, 250,
+                                                  ifelse(tv.lp.wof$load>250 & tv.lp.wof$load<=350, 300, 0))))))
+
+
+
+#plotting raw data of mass by age, facet_warpped by temp.var, color by bin plotting each temp.avg separately
+
+tv.lp.wof$bin<-as.factor(tv.lp.wof$bin)
+
+tv.lp.wof25<-subset(tv.lp.wof, temp.avg==25)
+tv.lp.wof28<-subset(tv.lp.wof, temp.avg==28)
+tv.lp.wof30<-subset(tv.lp.wof, temp.avg==30)
+
+
+rawma25.lbin.plot<-ggplot(tv.lp.wof25, aes(x=day.age, y=log.mass, group=interaction(bug.id, bin), 
+                                           color=bin))
+rawma25.lbin.plot+geom_point(
+)+geom_line(
+)+scale_color_viridis(discrete = TRUE
+)+facet_wrap(~temp.var)
+
+
+rawma28.lbin.plot<-ggplot(tv.lp.wof28, aes(x=day.age, y=log.mass, group=interaction(bug.id, bin),
+                                           color=bin))
+rawma28.lbin.plot+geom_point(
+)+geom_line(
+)+scale_color_viridis(discrete = TRUE
+)+facet_wrap(~temp.var)
+
+
+rawma30.lbin.plot<-ggplot(tv.lp.wof30, aes(x=day.age, y=log.mass, group=interaction(bug.id, bin),
+                                           color=bin))
+rawma30.lbin.plot+geom_point(
+)+geom_line(
+)+scale_color_viridis(discrete = TRUE
+)+facet_wrap(~temp.var)
+
+
+
+
+#plotting mean mass and age by bin
+
+massbin.sum<-summarySE(tv.lp.wof, measurevar = "log.mass",
+                       groupvars = c("temp.avg", "temp.var", "instar", "bin"),
+                       na.rm = TRUE)
+massbin.sum
+
+
+agebin.sum<-summarySE(tv.lp.wof, measurevar = "day.age",
+                      groupvars = c("temp.avg", "temp.var", "instar", "bin"),
+                      na.rm = TRUE)
+agebin.sum
+
+
+massbin.sum$age<-agebin.sum[,6]
+massbin.sum$age.se<-agebin.sum[,8]
+
+massbin.sum25<-subset(massbin.sum, temp.avg==25)
+massbin.sum28<-subset(massbin.sum, temp.avg==28)
+massbin.sum30<-subset(massbin.sum, temp.avg==30)
+
+
+mnbin25.plot<-ggplot(massbin.sum25, aes(x=age, y=log.mass, color=bin))
+mnbin25.plot+geom_point(size=3
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log.mass-se, ymax=log.mass+se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
+                 height=.5, size=1
+)+facet_wrap(~temp.var)
+
+mnbin28.plot<-ggplot(massbin.sum28, aes(x=age, y=log.mass, color=bin))
+mnbin28.plot+geom_point(size=3
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log.mass-se, ymax=log.mass+se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
+                 height=.5, size=1
+)+facet_wrap(~temp.var)
+
+
+mnbin30.plot<-ggplot(massbin.sum30, aes(x=age, y=log.mass, color=bin))
+mnbin30.plot+geom_point(size=3
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log.mass-se, ymax=log.mass+se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
+                 height=.5, size=1
+)+facet_wrap(~temp.var)
 
