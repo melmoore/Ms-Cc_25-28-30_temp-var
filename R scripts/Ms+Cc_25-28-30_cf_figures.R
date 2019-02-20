@@ -146,7 +146,14 @@ amass.plot+geom_point(aes(shape=treatment),size=5
 
 #PLOTTING HOST CATERPILLAR MASS X AGE (+/- 5 group included)
 
+#remove individuals that were parasitized and wandered
 
+tv.long.wof$keep.p<-ifelse(tv.long.wof$treatment=="para" & tv.long.wof$wander==1, 0, 1)
+
+tv.long.wof<-subset(tv.long.wof, keep.p==1)
+
+
+#There are only 11 5ths in the 28C para treatment, probably due to emergence at 4th? look into this
 amass.wof.sum<-summarySE(tv.long.wof,measurevar = "log.mass",
                      groupvar=c("treatment","temp.avg","temp.var","instar"),
                      na.rm=TRUE)
@@ -211,8 +218,45 @@ amass.wof.plot+geom_point(aes(shape=treatment),size=5
 
 
 
+#without field OR the +/-5 treatment
+
+amass.wofno5.sum<-subset(amass.wof.sum, temp.var!=5)
+amass.wofno5.sum
 
 
+amass.wof.plot2<-ggplot(amass.wofno5.sum,aes(x=day.age,y=log.mass,
+                                         group=interaction(temp.var,treatment),color=temp.var))
+amass.wof.plot2+geom_point(aes(shape=treatment),size=5
+)+geom_line(aes(linetype=treatment),size=1.7
+)+geom_errorbar(aes(ymin=log.mass-se,ymax=log.mass+se),width=1.2,size=1
+)+geom_errorbarh(aes(xmin=day.age-dage.se,xmax=day.age+dage.se), height=.4, size=1    
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
+                        breaks=c("control","para"),labels=c("Cotrol","Parasitized"),
+                        guide=guide_legend(keywidth = 2.5)
+)+scale_shape_manual(values = c(16,17),name="Treatment",
+                     breaks=c("control","para"),labels=c("Cotrol","Parasitized"),
+                     guide=guide_legend(keywidth = 2.5)
+)+labs(x="Age [days]",y="Log(Mass) [mg]"
+)+facet_wrap(~temp.avg
+)+theme(text = element_text(family=("Cambria")),
+        strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.85, .25))
 
 #---------------------------------------
 
@@ -533,4 +577,41 @@ mnbin30.plot+geom_point(size=3
 )+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
                  height=.5, size=1
 )+facet_wrap(~temp.var)
+
+
+
+#------------------------------
+
+#PLOTTING HISTOGRAM OF TIME TO EM OR DEATH FOR 30 PARA TREATMENTS
+
+#subset to only parasitized individuals
+tv.para.wof<-subset(tv.wof, treatment=="para")
+
+#subset to only 30 mean temp
+high<-subset(tv.para.wof, temp.avg==30)
+
+#subset to only costant or +/-10 treatments
+high.no5<-subset(high, temp.var!=5)
+
+#make a column for whether the individual had emergence or not
+high.no5$date.em.j[is.na(high.no5$date.em.j)]<-0
+high.no5$hadem<-ifelse(high.no5$date.em.j>0, 1, 0)
+
+#need a column that combines temp.var and hadem
+#high.no5$emclass<-ifelse(high.no5$temp.var==0 & high.no5)
+
+mongo.hist.plot<-ggplot(high.no5, aes(x=ttend, group=interaction(temp.var, hadem), fill=temp.var))
+mongo.hist.plot+geom_histogram(binwidth = 1,
+                               position = "identity")
+
+
+
+
+
+
+
+
+
+
+
 
