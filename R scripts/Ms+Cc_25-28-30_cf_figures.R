@@ -39,7 +39,11 @@ View(tv.long)
 tv.long$log.mass<-log(tv.long$mass)
 
 
+#There is one WOWE that has an erroneous date in the date.em.j column--I assume that it's an error, 
+  ## and should be the date died, but am removing that individual for now
+tv.long<-subset(tv.long, bug.id!="30.10_p_17")
 
+tv<-subset(tv, bug.id!="30.10_p_17")
 
 #Creating a few columns with treatment combinations to be able to sort out the 30+/-5 treatments
 
@@ -305,6 +309,44 @@ totsurv.plot<-totsurv.plot+geom_point(aes(shape=temp.avg),size=5
 totsurv.plot
 
 
+#making temp avg be the x axis
+  #removing +/-5 treatment
+totsurv.sum.no5<-subset(totsurv.sum, temp.var!=5)
+
+#making temp avg be numeric
+totsurv.sum.no5$temp.avg<-as.numeric(totsurv.sum.no5$temp.avg)
+totsurv.sum.no5$temp.avg<-ifelse(totsurv.sum.no5$temp.avg==1, 25,
+                                 ifelse(totsurv.sum.no5$temp.avg==2, 28, 30))
+
+totsurv.plot2<-ggplot(totsurv.sum.no5,aes(x=temp.avg,y=tot.surv,group=temp.var,color=temp.var))
+totsurv.plot2+geom_point(size=5
+)+geom_line(size=2
+)+geom_errorbar(aes(ymin=tot.surv-se, ymax=tot.surv+se),
+                width=.5, size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                       breaks=c("0","10"),labels=c("0","10"),
+                       guide=guide_legend(keywidth = 2.5)
+)+scale_x_continuous(limits=c(24.5,30.5),
+                     breaks = c(25, 28, 30)
+)+labs(x="Mean Temperature [C]", y="% Eclosion"
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=24),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = c(0.6, 0.85),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18))
+
+                     
+                     
 #Survival to emergence rxn norm
 
 percem.sum<-summarySE(tv.para,measurevar = "tot.elsurv",groupvars = c("temp.avg","temp.var"),na.rm=TRUE)
@@ -344,6 +386,46 @@ emsurv.plot
 
 surv.fig<-plot_grid(emsurv.plot, totsurv.plot, labels=c("A", "B"), align="h")
 surv.fig
+
+
+#plotting with mean temp on x axis, and color by temp var
+#removing +/-5 temp treatment
+percem.sum.no5<-subset(percem.sum, temp.var!=5)
+
+#make mean temp numeric instead of factor
+percem.sum.no5$temp.avg<-as.numeric(percem.sum.no5$temp.avg)
+percem.sum.no5$temp.avg<-ifelse(percem.sum.no5$temp.avg==1, 25,
+                                ifelse(percem.sum.no5$temp.avg==2, 28, 30))
+
+
+emsurv.plot2<-ggplot(percem.sum.no5,aes(x=temp.avg,y=tot.elsurv,group=temp.var,color=temp.var))
+emsurv.plot2+geom_point(size=5
+)+geom_line(size=2
+)+geom_errorbar(aes(ymin=tot.elsurv-se, ymax=tot.elsurv+se),
+                width=.5, size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_x_continuous(limits=c(25,30),
+                     breaks = c(25, 28, 30)
+)+labs(x="Mean Temperature [C]", y="% Eclosion"
+)+theme(text = element_text(family=("Cambria")),
+        strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=24),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = c(0.6, 0.85),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18))
+
 
 #---------------------------------
 
@@ -583,12 +665,17 @@ mnbin30.plot+geom_point(size=3
 #------------------------------
 
 #PLOTTING HISTOGRAM OF TIME TO EM OR DEATH FOR 30 PARA TREATMENTS
+  ##excluding individuals that wandered for now, may later include the few that wandered and died as 
+  ##larval-pupal intermediates
 
 #subset to only parasitized individuals
 tv.para.wof<-subset(tv.wof, treatment=="para")
 
 #subset to only 30 mean temp
 high<-subset(tv.para.wof, temp.avg==30)
+
+#remove those that wandered
+high<-subset(high, wander==0)
 
 #subset to only costant or +/-10 treatments
 high.no5<-subset(high, temp.var!=5)
@@ -598,13 +685,21 @@ high.no5$date.em.j[is.na(high.no5$date.em.j)]<-0
 high.no5$hadem<-ifelse(high.no5$date.em.j>0, 1, 0)
 
 #need a column that combines temp.var and hadem
-#high.no5$emclass<-ifelse(high.no5$temp.var==0 & high.no5)
+high.no5$emclass<-ifelse(high.no5$temp.var==0 & high.no5$hadem==1, "30_c_em",
+                         ifelse(high.no5$temp.var==10 & high.no5$hadem==1, "30_f_em", "30_f_wowe"))
 
-mongo.hist.plot<-ggplot(high.no5, aes(x=ttend, group=interaction(temp.var, hadem), fill=temp.var))
+mongo.hist.plot<-ggplot(high.no5, aes(x=ttend, fill=emclass))
 mongo.hist.plot+geom_histogram(binwidth = 1,
-                               position = "identity")
+                               position = "identity"
+)+scale_fill_viridis(discrete = TRUE)
 
+#making the counts be lines instead of bars
 
+mongo.hist.plot2<-ggplot(high.no5, aes(x=ttend, color=emclass))
+mongo.hist.plot2+geom_freqpoly(binwidth = 1,
+                               size=2,
+                               alpha=.8
+)+scale_color_viridis(discrete=TRUE)
 
 
 
