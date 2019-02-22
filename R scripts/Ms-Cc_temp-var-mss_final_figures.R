@@ -19,8 +19,6 @@ library(viridis)
 
 #load data sets
 
-#load data
-
 tv <- read_csv("data files/25-28-30_tv-final_clean.csv", 
                col_types = cols(temp.avg = col_factor(levels = c("25", "28", "30")), 
                                 temp.var = col_factor(levels = c("0", "5", "10")), 
@@ -40,7 +38,7 @@ View(tv.long)
 
 #-------------------------
 
-#Configure data for use in creatng plots
+#Configure data for use in creating plots
 
 #creating a column for log.mass in tv.long
 
@@ -81,6 +79,11 @@ tv.ab<-subset(tv.ab,all.trt!="30.5.c")
 
 #Making a subset without field caterpillars
 tv.wof<-subset(tv, pop=="lab")
+
+
+#subset to only parasitized individuals for wasp figures
+tv.para<-subset(tv.wof, treatment=="para")
+
 
 
 #----------------------------------
@@ -177,7 +180,98 @@ amass.wof.plot2+geom_point(aes(shape=treatment),size=5
 
 #WASP SURVIVAL TO EMERGENCE AND ECLOSION
 
-#x axis temp avg or temp var? eclosion / total load, or ecl / num em?
+# % survival to emergence
+
+percem.sum<-summarySE(tv.para,measurevar = "tot.elsurv",groupvars = c("temp.avg","temp.var"),na.rm=TRUE)
+percem.sum
+
+#plotting with mean temp on x axis, and color by temp var
+#removing +/-5 temp treatment
+percem.sum.no5<-subset(percem.sum, temp.var!=5)
+
+#make mean temp numeric instead of factor
+percem.sum.no5$temp.avg<-as.numeric(percem.sum.no5$temp.avg)
+percem.sum.no5$temp.avg<-ifelse(percem.sum.no5$temp.avg==1, 25,
+                                ifelse(percem.sum.no5$temp.avg==2, 28, 30))
+
+
+emsurv.plot2<-ggplot(percem.sum.no5,aes(x=temp.avg,y=tot.elsurv,group=temp.var,color=temp.var))
+percem_fig<-emsurv.plot2+geom_point(size=5,
+                        shape=17
+)+geom_line(size=2,
+            linetype="dashed"
+)+geom_errorbar(aes(ymin=tot.elsurv-se, ymax=tot.elsurv+se),
+                width=.5, size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_x_continuous(limits=c(24.5,30.5),
+                     breaks = c(25, 28, 30)
+)+scale_y_continuous(limits = c(0, 0.9)
+)+labs(x="Mean Temperature [C]", y="% Eclosion"
+)+theme(axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = "none")
+
+percem_fig
+
+# % survival to eclosion (divided by total load)
+
+totsurv.sum<-summarySE(tv.para,measurevar = "tot.surv",
+                       groupvars = c("temp.avg","temp.var"),
+                       na.rm=TRUE)
+totsurv.sum
+
+
+#removing +/-5 treatment
+totsurv.sum.no5<-subset(totsurv.sum, temp.var!=5)
+
+#making temp avg be numeric
+totsurv.sum.no5$temp.avg<-as.numeric(totsurv.sum.no5$temp.avg)
+totsurv.sum.no5$temp.avg<-ifelse(totsurv.sum.no5$temp.avg==1, 25,
+                                 ifelse(totsurv.sum.no5$temp.avg==2, 28, 30))
+
+totsurv.plot2<-ggplot(totsurv.sum.no5,aes(x=temp.avg,y=tot.surv,group=temp.var,color=temp.var))
+percecl_fig<-totsurv.plot2+geom_point(size=5,
+                         shape=17
+)+geom_line(size=2,
+            linetype="dashed"
+)+geom_errorbar(aes(ymin=tot.surv-se, ymax=tot.surv+se),
+                width=.5, size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_x_continuous(limits=c(24.5,30.5),
+                     breaks = c(25, 28, 30)
+)+scale_y_continuous(limits = c(0, 0.9)
+)+labs(x="Mean Temperature [C]", y="% Eclosion"
+)+theme(axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = c(0.6, 0.85),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18))
+
+percecl_fig
+
+
+#Combining perc_em and perc_ecl into one figure
+
+surv_fig<-plot_grid(percem_fig, percecl_fig, labels=c("A", "B"), align="h")
+surv_fig
 
 
 #----------------------------
