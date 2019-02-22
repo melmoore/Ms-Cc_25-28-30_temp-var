@@ -208,7 +208,7 @@ percem_fig<-emsurv.plot2+geom_point(size=5,
 )+scale_x_continuous(limits=c(24.5,30.5),
                      breaks = c(25, 28, 30)
 )+scale_y_continuous(limits = c(0, 0.9)
-)+labs(x="Mean Temperature [C]", y="% Eclosion"
+)+labs(x="Mean Temperature [C]", y="% Emergence"
 )+theme(axis.line.x=element_line(colour = 'black', size = 1),
         axis.line.y=element_line(colour = 'black', size = 1),
         axis.ticks = element_line(colour = 'black', size = 1),
@@ -278,7 +278,96 @@ surv_fig
 
 #WASP DEVELOPMENT TIME TO EMERGENCE AND ECLOSION
 
-#x axis temp avg or temp var?
+#Plotting dev time with temp avg on x axis, temp var as grouping variable
+
+#Mean and variance of wasp development time to emergence
+wdevint.sum<-summarySE(tv.para,measurevar = "waspdev.int",
+                       groupvars = c("temp.avg","temp.var"),
+                       na.rm=TRUE)
+wdevint.sum
+
+#removing +/-5 temp treatment
+wdevint.sum.no5<-subset(wdevint.sum, temp.var!=5)
+
+#make mean temp numeric instead of factor
+wdevint.sum.no5$temp.avg<-as.numeric(wdevint.sum.no5$temp.avg)
+wdevint.sum.no5$temp.avg<-ifelse(wdevint.sum.no5$temp.avg==1, 25,
+                                 ifelse(wdevint.sum.no5$temp.avg==2, 28, 30))
+
+
+wdevint.plot2<-ggplot(wdevint.sum.no5,aes(x=temp.avg,y=waspdev.int,group=temp.var,color=temp.var))
+emdev_fig<-wdevint.plot2+geom_point(size=5, shape=17
+)+geom_line(size=2, linetype="dashed"
+)+geom_errorbar(aes(ymin=waspdev.int-se, ymax=waspdev.int+se),
+                width=.5, size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_x_continuous(limits=c(24.5,30.5),
+                     breaks = c(25, 28, 30)
+)+labs(x="Mean Temperature [C]", y="Time to Emergence [days]"
+)+theme(axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = "none")
+
+emdev_fig
+
+
+#Mean and variance of wasp development time to eclosion
+wdevtot.sum<-summarySE(tv.para,measurevar = "waspdev.tot",
+                       groupvars = c("temp.avg","temp.var"),
+                       na.rm=TRUE)
+wdevtot.sum
+
+#removing +/-5 temp treatment
+wdevtot.sum.no5<-subset(wdevtot.sum, temp.var!=5)
+
+#make mean temp numeric instead of factor
+wdevtot.sum.no5$temp.avg<-as.numeric(wdevtot.sum.no5$temp.avg)
+wdevtot.sum.no5$temp.avg<-ifelse(wdevtot.sum.no5$temp.avg==1, 25,
+                                 ifelse(wdevtot.sum.no5$temp.avg==2, 28, 30))
+
+
+wdevtot.plot2<-ggplot(wdevtot.sum.no5,aes(x=temp.avg,y=waspdev.tot,group=temp.var,color=temp.var))
+ecldev_fig<-wdevtot.plot2+geom_point(size=5,shape=17
+)+geom_line(size=2,
+            linetype="dashed"
+)+geom_errorbar(aes(ymin=waspdev.tot-se, ymax=waspdev.tot+se),
+                width=.5, size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+scale_x_continuous(limits=c(24.5,30.5),
+                     breaks = c(25, 28, 30)
+)+labs(x="Mean Temperature [C]", y="Time to Eclosion [days]"
+)+theme(axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = c(0.6, 0.6),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18))
+
+ecldev_fig
+
+
+#combine into one figure
+dev_fig<-plot_grid(emdev_fig, ecldev_fig, labels=c("A", "B"), align="h")
+dev_fig
+
+
 
 
 #-----------------------------
