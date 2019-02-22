@@ -813,10 +813,13 @@ mongo.hist.plot+geom_histogram(binwidth = 1,
 
 mongo.hist.plot2<-ggplot(high.no5, aes(x=ttend, color=emclass))
 mongo.hist.plot2+geom_freqpoly(binwidth = 1,
-                               size=2,
-                               alpha=.8
-)+scale_color_viridis(discrete=TRUE)
-
+                               size=2.5
+)+scale_color_manual(values=c("#71028C", "#90D742", "darkgreen"))
+  
+  
+  
+  
+  #values=c("#71028C", "#90D742", "#657BBC"))
 
 
 
