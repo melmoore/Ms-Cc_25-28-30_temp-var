@@ -804,10 +804,30 @@ high.no5$hadem<-ifelse(high.no5$date.em.j>0, 1, 0)
 high.no5$emclass<-ifelse(high.no5$temp.var==0 & high.no5$hadem==1, "30_c_em",
                          ifelse(high.no5$temp.var==10 & high.no5$hadem==1, "30_f_em", "30_f_wowe"))
 
-mongo.hist.plot<-ggplot(high.no5, aes(x=ttend, fill=emclass))
-mongo.hist.plot+geom_histogram(binwidth = 1,
-                               position = "identity"
+#histogram with counts
+mongo.hist.plot<-ggplot(high.no5, aes(x=ttend))
+mongo.hist.plot+geom_histogram(aes(fill=emclass),
+                               binwidth = 1,
+                               position = "identity",
+                               col="black"
+)+geom_density(aes(color=emclass)
 )+scale_fill_viridis(discrete = TRUE)
+
+
+#histogram with density
+mongo.hist.plot3<-ggplot(high.no5, aes(x=ttend, fill=emclass))
+mongo.hist.plot3+geom_histogram(aes(y=..density..),
+                               binwidth = 1,
+                               position = "identity",
+                               col="black",
+                               alpha=.8
+)+geom_density(lwd=1, 
+               alpha=.6, 
+               color="black"
+)+scale_fill_viridis(discrete = TRUE
+)+scale_color_viridis(discrete = TRUE)
+
+
 
 #making the counts be lines instead of bars
 
