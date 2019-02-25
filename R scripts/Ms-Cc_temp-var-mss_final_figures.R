@@ -305,6 +305,8 @@ emdev_fig<-wdevint.plot2+geom_point(size=5, shape=17
                      guide=guide_legend(keywidth = 2.5)
 )+scale_x_continuous(limits=c(24.5,30.5),
                      breaks = c(25, 28, 30)
+)+scale_y_continuous(limits = c(10, 24),
+                     breaks = c(10, 12, 14, 16, 18, 20, 22, 24)
 )+labs(x="Mean Temperature [C]", y="Time to Emergence [days]"
 )+theme(axis.line.x=element_line(colour = 'black', size = 1),
         axis.line.y=element_line(colour = 'black', size = 1),
@@ -346,6 +348,8 @@ ecldev_fig<-wdevtot.plot2+geom_point(size=5,shape=17
                      guide=guide_legend(keywidth = 2.5)
 )+scale_x_continuous(limits=c(24.5,30.5),
                      breaks = c(25, 28, 30)
+)+scale_y_continuous(limits = c(10, 24),
+                     breaks = c(10, 12, 14, 16, 18, 20, 22, 24)
 )+labs(x="Mean Temperature [C]", y="Time to Eclosion [days]"
 )+theme(axis.line.x=element_line(colour = 'black', size = 1),
         axis.line.y=element_line(colour = 'black', size = 1),
@@ -356,7 +360,7 @@ ecldev_fig<-wdevtot.plot2+geom_point(size=5,shape=17
         axis.title.x = element_text(size = 20),
         axis.title.y = element_text(size = 20),
         legend.background = element_rect(color="black",linetype="solid"),
-        legend.position = c(0.6, 0.6),
+        legend.position = c(0.7, 0.15),
         legend.text = element_text(size=15),
         legend.title = element_text(size=18))
 
