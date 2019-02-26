@@ -378,7 +378,50 @@ dev_fig
 
 #DISTRIBUTION OF LIFE SPAN IN 30 MEAN TEMP TREATMENTS
 
-#frequency dist plot, or polygon histogram (lines)?
+#subset to only 30 mean temp
+high<-subset(tv.para, temp.avg==30)
+
+#remove those that wandered
+high<-subset(high, wander==0)
+
+#subset to only costant or +/-10 treatments
+high.no5<-subset(high, temp.var!=5)
+
+#make a column for whether the individual had emergence or not
+high.no5$date.em.j[is.na(high.no5$date.em.j)]<-0
+high.no5$hadem<-ifelse(high.no5$date.em.j>0, 1, 0)
+
+#need a column that combines temp.var and hadem
+high.no5$emclass<-ifelse(high.no5$temp.var==0 & high.no5$hadem==1, "30_c_em",
+                         ifelse(high.no5$temp.var==10 & high.no5$hadem==1, "30_f_em", "30_f_wowe"))
+
+
+#histogram with density (no density curve)
+mongo.hist.plot<-ggplot(high.no5, aes(x=ttend, fill=emclass))
+mongo.hist.plot+geom_histogram(aes(y=..density..),
+                                  binwidth = 1,
+                                  position = "identity",
+                                  col="black",
+                                  alpha=.75
+)+scale_fill_viridis(discrete = TRUE,
+                     breaks=c("30_c_em", "30_f_em", "30_f_wowe"),
+                     name="Treatment Outcome",
+                     labels=c("30+/-0 emergence", "30+/10 emergence", "30+/-10 WOWE")
+)+labs(x="Time [days]", y="Density"
+)+theme(axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = c(0.65, 0.8),
+        legend.text = element_text(size=15),
+        legend.title = element_text(size=18))
+
+
 
 
 
