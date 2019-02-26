@@ -809,12 +809,17 @@ mongo.hist.plot<-ggplot(high.no5, aes(x=ttend))
 mongo.hist.plot+geom_histogram(aes(fill=emclass),
                                binwidth = 1,
                                position = "identity",
-                               col="black"
-)+geom_density(aes(color=emclass)
-)+scale_fill_viridis(discrete = TRUE)
+                               col="black",
+                               alpha=.6
+)+scale_fill_viridis(discrete = TRUE,
+                     breaks=c("30_c_em", "30_f_em", "30_f_wowe"),
+                     name="Treatment Outcome",
+                     labels=c("30+/-0 emergence", "30+/10 emergence", "30+/-10 WOWE")
+)+labs(x="Time [days]", y="Counts"
+)+theme(legend.position = c(.65, .8))
 
 
-#histogram with density
+#histogram with density (default bandwidth)--with geom_density overlaid
 mongo.hist.plot3<-ggplot(high.no5, aes(x=ttend, fill=emclass))
 mongo.hist.plot3+geom_histogram(aes(y=..density..),
                                binwidth = 1,
@@ -826,6 +831,40 @@ mongo.hist.plot3+geom_histogram(aes(y=..density..),
                color="black"
 )+scale_fill_viridis(discrete = TRUE
 )+scale_color_viridis(discrete = TRUE)
+
+
+
+#histogram with density (no density curve)
+mongo.hist.plot3.5<-ggplot(high.no5, aes(x=ttend, fill=emclass))
+mongo.hist.plot3.5+geom_histogram(aes(y=..density..),
+                                binwidth = 1,
+                                position = "identity",
+                                col="black",
+                                alpha=.8
+)+scale_fill_viridis(discrete = TRUE,
+                     breaks=c("30_c_em", "30_f_em", "30_f_wowe"),
+                     name="Treatment Outcome",
+                     labels=c("30+/-0 emergence", "30+/10 emergence", "30+/-10 WOWE")
+)+labs(x="Time [days]", y="Density"
+)+theme(legend.position = c(.65, .8))
+
+#specifying a bandwidth for all emclass density--so that all are smoothed at the same bandwidth
+
+mongo.hist.plot4<-ggplot(high.no5, aes(x=ttend, fill=emclass))
+mongo.hist.plot4+geom_histogram(aes(y=..density..),
+                                binwidth = 1,
+                                position = "identity",
+                                col="black",
+                                alpha=.8
+)+geom_density(adjust= 1/2, lwd=1, 
+               alpha=.6, 
+               color="black"
+)+scale_fill_viridis(discrete = TRUE
+)+scale_color_viridis(discrete = TRUE)
+
+
+
+
 
 
 
