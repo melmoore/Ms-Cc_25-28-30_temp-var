@@ -432,15 +432,249 @@ mongo.hist.plot+geom_histogram(aes(y=..density..),
   ##EFFECTS OF LOAD ON HOST GROWTH AND DEVELOPMENT
 
 
+#LOAD EFFECTS ON SURVIVAL TO EMERGENCE
+
+#calculate percent emergence
+
+
+#remove +/-5 treatment
+tv.pno5<-subset(tv.para, temp.var!=5)
+
+emload.plot<-ggplot(tv.pno5, aes(x=load, y=tot.elsurv, color=temp.var))
+emload.plot+geom_point(size=3
+)+geom_smooth(method=lm, se=FALSE,
+              size=1.5
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+labs(x="Total Load", y="Percent Emerged"
+)+facet_wrap(~temp.avg
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.83, .8))
+
+
+#LOAD EFFECTS ON SURVIVAL TO ECLOSION
+
+#survival to eclosion
+eclload.plot<-ggplot(tv.pno5, aes(x=load, y=tot.surv, color=temp.var))
+eclload.plot+geom_point(size=3
+)+geom_smooth(method=lm, se=FALSE,
+              size=1.5
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+labs(x="Total Load", y="Percent Eclosed"
+)+facet_wrap(~temp.avg
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.83, .8))
+
+
+#LOAD EFFECTS ON HOST GROWTH
+
+#plotting load effects on host mass by binning load into bins of 50 (?)
+
+tv.lp.wof<-subset(tv.long, treatment=="para" & pop=="lab")
+
+#subset out the unsuc ovp
+tv.lp.wof<-subset(tv.lp.wof, suc.ovp==1)
+
+range(tv.lp.wof$load)
+
+#Making a column "bin" that puts hosts into bins determined by load, binned by 50 (except for >200 and <350)
+
+tv.lp.wof$bin<-ifelse(tv.lp.wof$load<=50 & tv.lp.wof$load!=0, 50,
+                      ifelse(tv.lp.wof$load>50 & tv.lp.wof$load<=100, 100,
+                             ifelse(tv.lp.wof$load>100 & tv.lp.wof$load<=150, 150,
+                                    ifelse(tv.lp.wof$load>150 & tv.lp.wof$load<=200, 200,
+                                           ifelse(tv.lp.wof$load>200 & tv.lp.wof$load<=350, 300, 0)))))
 
 
 
+#making bin a factor for plotting purposes
+tv.lp.wof$bin<-as.factor(tv.lp.wof$bin)
 
 
+#finding the mean and variance of each instar, grouped by mn temp, temp var and load bin
+massbin.sum<-summarySE(tv.lp.wof, measurevar = "log.mass",
+                       groupvars = c("temp.avg", "temp.var", "instar", "bin"),
+                       na.rm = TRUE)
+massbin.sum
 
 
+agebin.sum<-summarySE(tv.lp.wof, measurevar = "day.age",
+                      groupvars = c("temp.avg", "temp.var", "instar", "bin"),
+                      na.rm = TRUE)
+agebin.sum
 
 
+massbin.sum$age<-agebin.sum[,6]
+massbin.sum$age.se<-agebin.sum[,8]
 
+#subset out +/-5 treatment
+massbin.sum<-subset(massbin.sum, temp.var!=5)
+
+#divide into separate dataframes by mn temp for easier plotting
+massbin.sum25<-subset(massbin.sum, temp.avg==25)
+massbin.sum28<-subset(massbin.sum, temp.avg==28)
+massbin.sum30<-subset(massbin.sum, temp.avg==30)
+
+
+#making dummy rows for massbin.sum28--does not have any in the 300 class--so that it matches other mn temps
+temp.avg<-c(28, 28, 28, 28, 
+            28, 28, 28, 28)
+
+temp.var<-c(0, 0, 0, 0,
+            10, 10, 10, 10)
+
+instar<-c(3, 4, 5, "end",
+          3, 4, 5, "end")
+
+bin<-c(300, 300, 300, 300,
+       300, 300, 300, 300)
+
+N<-c(0, 0, 0, 0,
+     0, 0, 0, 0)
+
+log.mass<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+sd<-c(NA, NA, NA, NA, 
+      NA, NA, NA, NA)
+
+se<-c(NA, NA, NA, NA, 
+      NA, NA, NA, NA)
+
+ci<-c(NA, NA, NA, NA, 
+      NA, NA, NA, NA)
+
+age<-c(NA, NA, NA, NA, 
+       NA, NA, NA, NA)
+
+age.se<-c(NA, NA, NA, NA, 
+          NA, NA, NA, NA)
+
+
+dummy<-data.frame(temp.avg, temp.var, instar, bin, N, log.mass, sd, se, ci, age, age.se)
+
+massbin.sum28<-rbind(massbin.sum28, dummy)
+
+
+#plot mn mass and age binned by load, plotting mn temps separately
+
+#25
+mnbin25.plot<-ggplot(massbin.sum25, aes(x=age, y=log.mass, color=bin))
+mnbin25.plot<-mnbin25.plot+geom_point(size=3
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log.mass-se, ymax=log.mass+se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
+                 height=.5, size=1
+)+scale_color_viridis(discrete = TRUE,
+                      name="Load Bin"
+)+labs(x="Age [days]", y="Log(Mass) [mg]", title="25C"
+)+facet_wrap(~temp.var
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.position = "none")
+
+mnbin25.plot
+
+#28
+mnbin28.plot<-ggplot(massbin.sum28, aes(x=age, y=log.mass, color=bin))
+mnbin28.plot<-mnbin28.plot+geom_point(size=3
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log.mass-se, ymax=log.mass+se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
+                 height=.5, size=1
+)+scale_color_viridis(discrete = TRUE,
+                      name="Load Bin"
+)+labs(x="Age [days]", y="Log(Mass) [mg]", title="28C"
+)+facet_wrap(~temp.var
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.position = "none")
+
+mnbin28.plot
+
+#30
+mnbin30.plot<-ggplot(massbin.sum30, aes(x=age, y=log.mass, color=bin))
+mnbin30.plot<-mnbin30.plot+geom_point(size=3
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log.mass-se, ymax=log.mass+se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
+                 height=.5, size=1
+)+scale_color_viridis(discrete = TRUE,
+                      name="Load Bin"
+)+labs(x="Age [days]", y="Log(Mass) [mg]", title="30C"
+)+facet_wrap(~temp.var
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.8, .3))
+
+mnbin30.plot
+
+
+#combining into 1 figure (using cowplot)
+
+suppl_load_fig<-plot_grid(mnbin25.plot, mnbin28.plot, mnbin30.plot)
+suppl_load_fig
 
 
