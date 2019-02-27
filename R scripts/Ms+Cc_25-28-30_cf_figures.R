@@ -657,16 +657,60 @@ tv.para.wof$percem<-tv.para.wof$num.em/tv.para.wof$load
 
 tv.para.wof$percem[is.nan(tv.para.wof$percem)]<-NA
 
-emload.plot<-ggplot(tv.para.wof, aes(x=load, y=percem, color=temp.var))
-emload.plot+geom_point(
-)+geom_smooth(method=lm, se=FALSE
-)+facet_wrap(~temp.avg)
+#remove +/-5 treatment
+tv.pwf.no5<-subset(tv.para.wof, temp.var!=5)
+
+emload.plot<-ggplot(tv.pwf.no5, aes(x=load, y=percem, color=temp.var))
+emload.plot+geom_point(size=2
+)+geom_smooth(method=lm, se=FALSE,
+              size=1.2
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+labs(x="Total Load", y="Percent Emerged"
+)+facet_wrap(~temp.avg
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.83, .8))
+
 
 #survival to eclosion
-eclload.plot<-ggplot(tv.para.wof, aes(x=load, y=tot.surv, color=temp.var))
-eclload.plot+geom_point(
-)+geom_smooth(method=lm, se=FALSE
-)+facet_wrap(~temp.avg)
+eclload.plot<-ggplot(tv.pwf.no5, aes(x=load, y=tot.surv, color=temp.var))
+eclload.plot+geom_point(size=3
+)+geom_smooth(method=lm, se=FALSE,
+              size=1.5
+)+scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+)+labs(x="Total Load", y="Percent Eclosed"
+)+facet_wrap(~temp.avg
+)+theme(strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.83, .8))
 
 
 #---------------------
@@ -743,11 +787,57 @@ agebin.sum
 massbin.sum$age<-agebin.sum[,6]
 massbin.sum$age.se<-agebin.sum[,8]
 
+#subset out +/-5 treatment
+massbin.sum<-subset(massbin.sum, temp.var!=5)
+
 massbin.sum25<-subset(massbin.sum, temp.avg==25)
 massbin.sum28<-subset(massbin.sum, temp.avg==28)
 massbin.sum30<-subset(massbin.sum, temp.avg==30)
 
 
+#making dummy rows for massbin.sum28--does not have any in the 300 class--so that it matches other mn temps
+View(massbin.sum28)
+
+temp.avg<-c(28, 28, 28, 28, 
+            28, 28, 28, 28)
+
+temp.var<-c(0, 0, 0, 0,
+            10, 10, 10, 10)
+
+instar<-c(3, 4, 5, "end",
+          3, 4, 5, "end")
+
+bin<-c(300, 300, 300, 300,
+       300, 300, 300, 300)
+
+
+N<-c(0, 0, 0, 0,
+     0, 0, 0, 0)
+
+log.mass<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+sd<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+se<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+ci<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+age<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+age.se<-c(NA, NA, NA, NA, 
+            NA, NA, NA, NA)
+
+
+dummy<-data.frame(temp.avg, temp.var, instar, bin, N, log.mass, sd, se, ci, age, age.se)
+
+massbin.sum28<-rbind(massbin.sum28, dummy)
+
+#plot mn mass and age binned by load
 mnbin25.plot<-ggplot(massbin.sum25, aes(x=age, y=log.mass, color=bin))
 mnbin25.plot+geom_point(size=3
 )+geom_line(size=1.2
@@ -755,6 +845,7 @@ mnbin25.plot+geom_point(size=3
                 width=.5, size=1
 )+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
                  height=.5, size=1
+)+scale_color_viridis(discrete = TRUE
 )+facet_wrap(~temp.var)
 
 mnbin28.plot<-ggplot(massbin.sum28, aes(x=age, y=log.mass, color=bin))
@@ -764,6 +855,7 @@ mnbin28.plot+geom_point(size=3
                 width=.5, size=1
 )+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
                  height=.5, size=1
+)+scale_color_viridis(discrete = TRUE
 )+facet_wrap(~temp.var)
 
 
@@ -774,6 +866,7 @@ mnbin30.plot+geom_point(size=3
                 width=.5, size=1
 )+geom_errorbarh(aes(xmin=age-age.se, xmax=age+age.se),
                  height=.5, size=1
+)+scale_color_viridis(discrete = TRUE
 )+facet_wrap(~temp.var)
 
 
