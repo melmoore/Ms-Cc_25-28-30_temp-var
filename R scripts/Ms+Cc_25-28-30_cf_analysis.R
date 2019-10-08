@@ -180,10 +180,10 @@ pmd_pr_fit+geom_point(shape=1, size=5
              color="black", linetype="dashed"
 )+facet_wrap(~temp.var)
 
-
+#can't get the fixed effects fit lines for some reason--can only get the random effects fit lines
 pmd_pdat_fit<-ggplot(pmd, aes(x=day.age, y=log.mass, color=temp.avg))
 pmd_pdat_fit+geom_point(size=3
-)+geom_line(aes(y=pred_f, group=temp.avg),
+)+geom_line(aes(y=pred_f, group=interaction(temp.avg, bug.id)),
             size=2
 )+facet_wrap(~temp.var)
 
@@ -285,21 +285,31 @@ summary(gam_pml_mod)
 
 #run a GAMM with age and load as separate smooths--does not have an interaction with temp this way (2 2D surfaces, instead
 ## of one 3D surface)
-gam_mL_noint_mod<-gam(log.mass ~ s(age, by=temp,bs="ts") + s(load, by=temp, bs="ts") + s(bug.id,bs="re") + temp,
-                      method="ML", data=cpt_pm, na.action = na.omit)
-
 gam_pml_nointmod<-gam(log.mass ~ s(day.age, by=interaction(temp.avg, temp.var, bs="ts")) 
                       + s(load, by=interaction(temp.avg, temp.var, bs="ts")) + s(bug.id,bs="re") 
                       + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
 
 anova(gam_pml_nointmod)
 summary(gam_pml_nointmod)
+#what does plot() plot for a gam object?
+
+
+#make a null model with an intercept (age and load in the same smooth)
+gam_pml_null_mod<-gam(log.mass ~ s(day.age, load, bs="ts") 
+                 + s(bug.id,bs="re") + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
+
+#Make a null model with no intercept (age and load in separate smooths)
+gam_pml_null_nointmod<-gam(log.mass ~ s(day.age, bs="ts") 
+                      + s(load, bs="ts") + s(bug.id,bs="re") 
+                      + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
 
 
 #compare models with and without interaction of age and load in smooth
 #the no interaction mod seems better
-anova(gam_pml_mod, gam_pml_nointmod, test="Chisq")
-AIC(gam_pml_mod, gam_pml_nointmod)
+anova(gam_pml_mod, gam_pml_nointmod, gam_pml_null_mod, gam_pml_null_nointmod, test="Chisq")
+AIC(gam_pml_mod, gam_pml_nointmod, gam_pml_null_mod, gam_pml_null_nointmod)
 
 
 #Model with age and load in same smooth
@@ -409,6 +419,8 @@ summary(wtots.mod2)
 #MODELLING MASS AT END OF DEV (WAND OR EM)
 
 tv$lmend<-log(tv$mass.end)
+tv.no5$lmend<-log(tv.no5$mass.end)
+tv.para$lmend<-log(tv.para$mass.end)
 
 lmend.mod1<-lm(lmend~temp.avg*temp.var*treatment,
                data=tv,
@@ -419,21 +431,104 @@ summary(lmend.mod1)
 
 
 #model without the +/-5 treatment
-lmend.mod2<-lm(lmend~temp.avg*temp.var*treatment,
+lmend.mod2<-lme(lmend~temp.avg*temp.var*treatment,
+                random = ~1|bug.id,
                data=tv.no5,
+               method="ML",
                na.action=na.omit)
 
 anova(lmend.mod2)
 summary(lmend.mod2)
 
 
+#removing non significant terms for model testing
+lmend.mod2_red<-lme(lmend~temp.avg+temp.var+treatment + temp.avg:treatment + temp.var:treatment,
+                    random = ~1|bug.id,
+                    data=tv.no5,
+                    method = "ML",
+                    na.action=na.omit)
+anova(lmend.mod2_red)
+
+
+anova(lmend.mod2, lmend.mod2_red)
+
+
+#Additive model for model testing
+
+lmend.mod2_add<-lme(lmend~temp.avg+temp.var+treatment,
+                    random = ~1|bug.id,
+                    data=tv.no5,
+                    method = "ML",
+                    na.action=na.omit)
+
+
+anova(lmend.mod2, lmend.mod2_add, lmend.mod2_red) #reduced model is best
+
+
 #looking for only para, with load as fixed effect
 
-lmend.mod3<-lm(lmend~temp.avg*temp.var*load,
+lmend.mod3<-lme(lmend~temp.avg*temp.var*load,
+               random=~1|bug.id,
                data=tv.para,
-               na.action = na.omit)
+               na.action = na.omit,
+               method="ML")
 
 anova(lmend.mod3)
+
+
+#making a reduced model for testing
+lmend.mod3_add<-lme(lmend~temp.avg+temp.var+load,
+                    random=~1|bug.id,
+                    data=tv.para,
+                    na.action = na.omit,
+                    method="ML")
+
+anova(lmend.mod3_add)
+
+anova(lmend.mod3, lmend.mod3_add)
+
+
+#plotting mass at end by load
+
+lmend_plot<-ggplot(tv.para, aes(x=load, y=lmend, color=temp.var))
+lmend_plot+geom_point(
+)+geom_smooth(method="lm"
+)+facet_wrap(~temp.avg)
+
+
+#plotting model residuals
+
+lmend_dat<-tv.no5
+lmend_dat<-drop_na(lmend_dat, lmend)
+
+lmend_dat$pred_f<-predict(lmend.mod2, level = 0)
+lmend_dat$resid_f<-residuals(lmend.mod2, level = 0)
+
+lmend_pr_plot<-ggplot(lmend_dat, aes(x=pred_f, y=resid_f, color=temp.avg))
+lmend_pr_plot+geom_point(shape=1
+)+geom_hline(aes(yintercept=0), size=1, linetype="dashed"
+)+facet_wrap(treatment ~ temp.var)
+
+
+
+plmend<-tv.para
+plmend<-drop_na(plmend, lmend, load)
+
+plmend$pred_f<-predict(lmend.mod3, level = 0)
+plmend$resid_f<-residuals(lmend.mod3, level=0)
+
+plmend_pr_plot<-ggplot(plmend, aes(x=pred_f, y=resid_f, color=temp.avg))
+plmend_pr_plot+geom_point(shape=1
+)+geom_hline(aes(yintercept=0), size=1, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+plmend_lr_plot<-ggplot(plmend, aes(x=load, y=resid_f, color=temp.avg))
+plmend_pr_plot+geom_point(shape=1
+)+geom_hline(aes(yintercept=0)
+)+facet_wrap(~temp.var)
+
+
+
 
 
 #-----------------------------------
@@ -455,14 +550,24 @@ summary(lmlogit_mod)
 
 #make a model without load, see which is better
 
-lmlogit_mod2<-lme(lgt_surv ~ temp.avg*temp.var,
+lmlogit_mod_red<-lme(lgt_surv ~ temp.avg*temp.var,
                   random=~1|bug.id,
                   data=tv.para,
                   na.action = na.omit,
                   method="ML")
 
-anova(lmlogit_mod, lmlogit_mod2)
+anova(lmlogit_mod, lmlogit_mod_red)
 
+
+#reduced model without non significant terms
+lmlogit_mod_red2<-lme(lgt_surv ~ temp.avg*temp.var + temp.avg:load,
+                     random=~1|bug.id,
+                     data=tv.para,
+                     na.action = na.omit,
+                     method="ML")
+
+
+anova(lmlogit_mod, lmlogit_mod_red, lmlogit_mod_red2)
 
 
 #plotting model results
