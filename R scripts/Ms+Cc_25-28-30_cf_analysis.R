@@ -247,6 +247,7 @@ tv_mass$pred<-predict(gam_mass_mod, level=0)
 tv_mass$resid<-residuals(gam_mass_mod, level=0)
 
 
+
 md_gammod_ra<-ggplot(tv_mass, aes(x=day.age, y=resid, color=temp.avg))
 md_gammod_ra+geom_point(size=4, shape=1
 )+geom_hline(aes(yintercept=0),
@@ -257,7 +258,7 @@ md_gammod_ra+geom_point(size=4, shape=1
 
 md_gammod_fit<-ggplot(tv_mass, aes(x=day.age, y=log.mass, color=temp.avg))
 md_gammod_fit+geom_point(size=3, shape=1
-)+geom_line(aes(y=pred, group=interaction(temp.avg, bug.id))
+)+geom_line(aes(y=pred, group=temp.avg)
 )+facet_wrap(treatment~temp.var)
 
 
