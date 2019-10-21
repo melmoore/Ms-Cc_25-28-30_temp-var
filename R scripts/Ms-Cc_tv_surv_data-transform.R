@@ -119,5 +119,5 @@ test <- tmerge(data1 = test, data2 = tv_lngc, id=bug.id, instar=tdc(day.age, ins
 test <- tmerge(data1 = test, data2 = tv_lngc, id=bug.id, mass=tdc(day.age, mass))
 
 
-#running into problems because of mongos, need to sort better so can remove them from both dataframes
+
 
