@@ -1,4 +1,4 @@
-#Ms Cc temp var expt--analysis of wasp survival using brglm2
+#Ms Cc temp var expt--analysis of wasp survival using brglm2 and logistf
 
 
 #load libraries
@@ -57,6 +57,9 @@ tv.para<-subset(tv.para, date.wand.j==0)
 tv.para$tot.died <- tv.para$load - tv.para$num.ecl
 
 
+#remove empty +/-5 factor level, I think it was slowing down the model a ton
+tv.para$temp.var <- factor(tv.para$temp.var, levels=c("0", "10"))
+
 #------------------------------
 
 #binomial glm model of wasp survival to eclosion
@@ -99,6 +102,25 @@ summary(wpsecl_lf_mod1)
 logistftest(wpsecl_lf_mod1)
 
 
+#removing load 
+wpsecl_lf_mod2 <- logistf(tot.surv ~ temp.avg*temp.var,
+                          data=tv.para)
+
+summary(wpsecl_lf_mod2)
+
+
+#trying cbind of num.ecl and tot died as response variable
+wsmatecl_lf_mod1 <- logistf(cbind(num.ecl, tot.died) ~ temp.avg*temp.var*load,
+                            data=tv.para)
+
+
+#not using firth methods--just returned NAN for everything
+
+wpsecl_lf_mod1.5 <- logistf(tot.surv ~ temp.avg*temp.var*load,
+                          data=tv.para,
+                          firth=FALSE, pl=FALSE)
+
+summary(wpsecl_lf_mod1.5)
 
 #using logistf to model the number of wasps that survived to eclosion
   ##this does not run, I think because my response variable must be a vector with 0,1 or TRUE,FALSE values
@@ -125,3 +147,44 @@ tv.para$bin.wsecl <- ifelse(tv.para$num.ecl>0, 1, 0)
 wsecl_bin_mod1 <- logistf(bin.wsecl ~ temp.avg*temp.var,
                           data=tv.para)
 summary(wsecl_bin_mod1)
+
+
+
+#Is there a way to rearrange my data so that each wasp has it's own row, with a binary survival variable?
+  ##that would be a huge data frame, but would maybe allow me to answer my research question with a 
+  ##logisitic regression model?
+
+#using function from https://sakai.unc.edu/access/content/group/3d1eb92e-7848-4f55-90c3-7c72a54e7e43/public/docs/lectures/lecture26.htm
+  ##should generate a number of 1s = num.ecl, and a number of 0s = load - num.ecl (or tot.died) 
+bnry.func <- function(x) rep(c(1,0),c(x[1],x[2]-x[1]))
+
+# sample calculation
+test <- apply(tv.para[1:4, c("num.ecl", "load")], 1, bnry.func)
+
+#now apply to whole data frame: unlist the results, and add columns indicating the values of the 
+  ##bug.id, temp.var, temp.avg, load (do I need this?) repeated the necessary number of times.
+
+tvp.bnry <- data.frame(surv=unlist(apply(tv.para[,c("num.ecl", "load")], 1, bnry.func)),
+                       bug.id=rep(tv.para$bug.id, tv.para$load), temp.avg=rep(tv.para$temp.avg, tv.para$load),
+                       temp.var=rep(tv.para$temp.var, tv.para$load), load=rep(tv.para$load, tv.para$load))
+dim(tvp.bnry)
+View(tvp.bnry)
+
+
+#now attempting to run a logistf model using my binary response data
+  ##chisq are inf and p value is 0 for temp.avg 30....
+wsbnry_lf_mod1 <- logistf(surv ~ temp.avg*temp.var*load,
+                          data=tvp.bnry)
+
+summary(wsbnry_lf_mod1)
+exp(coef(wsbnry_lf_mod1))
+logistftest(wsbnry_lf_mod1)
+
+
+#trying without load, since I don't quite know if it makes sense to include
+##chisq are inf and p value is 0 for temp.avg 30 and 28:10......
+wsbnry_lf_mod2 <- logistf(surv ~ temp.avg*temp.var,
+                          data=tvp.bnry)
+
+summary(wsbnry_lf_mod2)
+
