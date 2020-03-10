@@ -46,6 +46,9 @@ tv.long$log.mass<-log(tv.long$mass)
 tv.long.no5<-subset(tv.long,temp.var!=5)
 tv.no5<-subset(tv, temp.var!=5)
 
+#create data sets with out field individuals
+tv.no5 <- subset(tv.no5, pop=="lab")
+tv.long.no5 <- subset(tv.long, pop=="lab")
 
 #create datasets with only parasitized hosts
 
@@ -57,6 +60,9 @@ tv.long.para$date.wand.j[is.na(tv.long.para$date.wand.j)]<-0
 tv.long.para<-subset(tv.long.para, date.wand.j==0)
 tv.long.para$date.wand.j[tv.long.para$date.wand.j==0]<-NA
 
+#remove individual with load > 300
+tv.long.para <- subset(tv.long.para, load < 300)
+
 
 #wide dataframe
 tv.para<-subset(tv.no5, treatment=="para")
@@ -65,6 +71,8 @@ tv.para<-subset(tv.no5, treatment=="para")
 tv.para$date.wand.j[is.na(tv.para$date.wand.j)]<-0
 tv.para<-subset(tv.para, date.wand.j==0)
 
+#remove individual with load > 300
+tv.para <- subset(tv.para, load < 300)
 
 
 #---------------------------------------------
@@ -211,11 +219,14 @@ tv_mass$bug.id<-as.factor(tv_mass$bug.id)
 
 
 #run a full GAMM model (where the smooth of age is also affected by the interaction of temp and treat)
-gam_mass_mod<-gam(log.mass ~ s(day.age, by= interaction(treatment,temp.avg, temp.var, k=10,bs="ts")) 
+gam_mass_mod<-gam(log.mass ~ s(day.age, by= interaction(treatment,temp.avg, temp.var, k=20,bs="ts")) 
                   + s(bug.id,bs="re") + treatment * temp.avg * temp.var,
                   method="ML", data=tv_mass, na.action = na.omit)
 anova(gam_mass_mod)
 summary(gam_mass_mod)
+
+gam.check(gam_mass_mod, type = "deviance")
+
 
 
 #Make a null model for model testing, where the smooth of age is not affected by temp.var, temp.avg or treat
@@ -234,12 +245,14 @@ gam_mass_usk_mod<-gam(log.mass ~ s(day.age, by= interaction(treatment,temp.avg, 
 anova(gam_mass_usk_mod)
 summary(gam_mass_usk_mod)
 
+gam.check(gam_mass_usk_mod)
 
 #compare full and null models
 #full model is much better!
 #models with k=10 and k unspecified don't differ
 anova(gam_mass_mod, gam_mass_usk_mod, gam_mnull_mod, test="Chisq")
 AIC(gam_mass_mod, gam_mass_usk_mod, gam_mnull_mod)
+
 
 
 #make columns with predicted and residual values for plotting
@@ -283,16 +296,19 @@ gam_pml_mod<-gam(log.mass ~ s(day.age, load, by=interaction(temp.avg, temp.var, 
 anova(gam_pml_mod)
 summary(gam_pml_mod)
 
+gam.check(gam_pml_mod)
 
 #run a GAMM with age and load as separate smooths--does not have an interaction with temp this way (2 2D surfaces, instead
 ## of one 3D surface)
-gam_pml_nointmod<-gam(log.mass ~ s(day.age, by=interaction(temp.avg, temp.var, bs="ts")) 
-                      + s(load, by=interaction(temp.avg, temp.var, bs="ts")) + s(bug.id,bs="re") 
+gam_pml_nointmod<-gam(log.mass ~ s(day.age, by=interaction(temp.avg, temp.var, k=10, bs="ts")) 
+                      + s(load, by=interaction(temp.avg, temp.var, k=10, bs="ts")) + s(bug.id,bs="re") 
                       + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
 
 anova(gam_pml_nointmod)
 summary(gam_pml_nointmod)
 #what does plot() plot for a gam object?
+
+gam.check(gam_pml_nointmod)
 
 
 #make a null model with an intercept (age and load in the same smooth)
