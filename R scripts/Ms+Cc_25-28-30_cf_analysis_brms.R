@@ -110,6 +110,18 @@ wsnecl_pred_mod2 <- brm(num.ecl ~ 1 + temp.avg +temp.var +load + (1|bug.id),
 #-------------------------------
 
 #moving on to try my actual model structure (binomial glm to see if I can get that to work)
+  ##initial model params take from https://www.rensvandeschoot.com/tutorials/generalised-linear-models-with-brms/
+  ##as a starting point
+
+wsbnm_mod1 <- brm(cbind(num.ecl, tot.died) ~ temp.avg*temp.var*load + (1|bug.id),
+                  data=tv.para,
+                  family=binomial,
+                  warmup = 500, 
+                  iter = 2000, 
+                  chains = 2, 
+                  inits= "0", 
+                  cores=2,
+                  seed = 123)
 
 
 
