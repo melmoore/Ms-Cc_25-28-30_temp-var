@@ -163,6 +163,7 @@ test <- apply(tv.para[1:4, c("num.ecl", "load")], 1, bnry.func)
 
 #now apply to whole data frame: unlist the results, and add columns indicating the values of the 
   ##bug.id, temp.var, temp.avg, load (do I need this?) repeated the necessary number of times.
+  ##wowes not included because load is 0--figure out how to fix
 
 tvp.bnry <- data.frame(surv=unlist(apply(tv.para[,c("num.ecl", "load")], 1, bnry.func)),
                        bug.id=rep(tv.para$bug.id, tv.para$load), temp.avg=rep(tv.para$temp.avg, tv.para$load),
@@ -181,10 +182,27 @@ exp(coef(wsbnry_lf_mod1))
 logistftest(wsbnry_lf_mod1)
 
 
+#trying model without penalized likelihood
+wsbnry_lf_mod1.5 <- logistf(surv ~ temp.avg*temp.var*load,
+                          data=tvp.bnry,
+                          pl=FALSE)
+
+summary(wsbnry_lf_mod1.5)
+exp(coef(wsbnry_lf_mod1.5))
+logistftest(wsbnry_lf_mod1.5)
+
+
+
 #trying without load, since I don't quite know if it makes sense to include
 ##chisq are inf and p value is 0 for temp.avg 30 and 28:10......
-wsbnry_lf_mod2 <- logistf(surv ~ temp.avg*temp.var,
+wsbnry_lf_mod2 <- logistf(surv ~ temp.avg+temp.var,
                           data=tvp.bnry)
 
 summary(wsbnry_lf_mod2)
+logistftest(wsbnry_lf_mod2)
+
+
+tvp.bnry.30 <- subset(tvp.bnry, temp.avg==30)
+
+
 
