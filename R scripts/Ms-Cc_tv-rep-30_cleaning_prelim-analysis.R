@@ -204,6 +204,47 @@ tvrlw2 <- select(tvrlw2, num, p5.meas, age)
 tvr_wlng <- merge(tvr_lw1, tvrlw2, by=c("num", "p5.meas"))
 
 
+#----------------------
+
+#investigate whether individuals that were left out at wasp emergence had a difference in wasp survival
+
+#subset to only those that should have had emergence (tv = 0)
+tvr_pem <- subset(tvr_p, temp.var==0)
+
+#convert NAs to 0 for the left_out column
+tvr_pem$left_out[is.na(tvr_pem$left_out)]<-0
+
+#plot num_ecl against load, colored by left_out column
+leftout_plot <- ggplot(tvr_pem, aes(x=load, y=num.ecl, color=as.character(left_out)))
+leftout_plot + geom_point(
+) + geom_smooth(method="lm")
+
+
+#plot psecl against load, colored by left_out column
+leftout_plot2 <- ggplot(tvr_pem, aes(x=load, y=ps.ecl, color=as.character(left_out)))
+leftout_plot2 + geom_point(
+) + geom_smooth(method="lm")
+
+
+#quick and dirty linear model of num.ecl
+leftout_mod <- lm(num.ecl ~ load * left_out,
+                  data=tvr_pem,
+                  na.action = na.omit)
+
+anova(leftout_mod)
+summary(leftout_mod)
+
+
+
+#quick and dirty linear model of ps.ecl
+leftout_mod2 <- lm(ps.ecl ~ left_out,
+                  data=tvr_pem,
+                  na.action = na.omit)
+
+anova(leftout_mod2)
+summary(leftout_mod2)
+
+
 #-------------------------
 
 #write to csv file, with datasets with and without dead individuals
