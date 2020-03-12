@@ -127,6 +127,12 @@ tv_all$keep <- ifelse(tv_all$died==0, 1,
 #subset to only those with 1 in keep column
 tv_all_cl <- subset(tv_all, keep==1)
 
+#make another keep column to distinguish those that died with no wasp em and no cull mass for the repl expt
+tv_all_cl$keep2 <- ifelse(tv_all_cl$expt=="repl" & tv_all_cl$died > 0, 0, 1)
+
+#subset to only keep2 = 1
+tv_all_cl <- subset(tv_all_cl, keep2==1)
+
 
 #--------------
 
