@@ -309,11 +309,8 @@ surv_fig_rwo
 
 #--------------------
 
+
 #look at effects of host growth between orig and repl experiment
-
-
-
-
 
 #subset to only 30C mean temp treatments, removing +/-5
 tvor_lng30 <- subset(tvor_lng, temp.avg==30 & temp.var!=5)
@@ -343,16 +340,160 @@ mn_lmss_sum$age_se <- mn_age_sum[, 8]
 
 
 
-#plot mean mass by mean age
+#plot mean mass by mean age--color by expt, facet wrap by tempvar and treatment
 mn_lma_plot <- ggplot(mn_lmss_sum, aes(x=age, y=log_mss, group=expt, color=expt))
-mn_lma_plot + geom_point(
-)+geom_line(
+mn_lma_plot + geom_point(aes(shape=expt), size=5
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age - age_se, xmax=age + age_se),
+                 height=.5, size=1
 )+facet_wrap(temp.var~treatment)
 
 
 
+#plot mean mass by age--color by treatment, facet wrap by temp.var and expt
+mn_lma_plot2 <- ggplot(mn_lmss_sum, aes(x=age, y=log_mss, group=treatment, color=treatment))
+mn_lma_plot2 + geom_point(aes(shape=treatment), size=5
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age - age_se, xmax=age + age_se),
+                 height=.5, size=1
+)+facet_wrap(temp.var~expt)
 
 
 
+#--------------------
+
+#plot mn host mass and age orig data for 25 and 28 with repl data for 30
+
+
+#subset out the orig 30C treatments--create keep sorting column
+tvor_lng$keep <- ifelse(tvor_lng$temp.avg==30 & tvor_lng$expt=="orig", 0, 1)
+tvor_lng_ro <- subset(tvor_lng, keep==1)
+
+
+#find mean values of host growth and age 
+
+#log mass
+mn_lmssro_sum <- summarySE(tvor_lng_ro, measurevar = "log_mss",
+                         groupvars = c("temp.avg", "temp.var", "treatment", "instar"),
+                         na.rm = TRUE)
+mn_lmssro_sum
+
+
+
+#age
+mn_agero_sum <- summarySE(tvor_lng_ro, measurevar = "age",
+                        groupvars = c("temp.avg", "temp.var", "treatment", "instar"),
+                        na.rm = TRUE)
+mn_agero_sum
+
+
+
+#add age and age_se columns to log mass sum
+mn_lmssro_sum$age <- mn_agero_sum[, 6]
+mn_lmssro_sum$age_se <- mn_agero_sum[, 8]
+
+
+
+#plot mn log mass by mn age, color by temp.var, line type by treatment, facet wrap by temp.avg
+mn_lmaro_plot <- ggplot(mn_lmssro_sum, aes(x=age, y=log_mss, group=interaction(temp.var, treatment),
+                                         color=temp.var))
+mn_lmaro_plot + geom_point(aes(shape=treatment),
+                           size=5
+) + geom_line(aes(linetype=treatment),
+              size=1.7
+) + geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
+                  width=1.7, size=1.2
+) + geom_errorbarh(aes(xmin=age - age_se, xmax=age + age_se),
+                   height=.3, size=1.2
+) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+) + scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
+                        breaks=c("control","para"),labels=c("Cotrol","Parasitized"),
+                        guide=guide_legend(keywidth = 2.5)
+) + scale_shape_manual(values = c(16,17),name="Treatment",
+                     breaks=c("control","para"),labels=c("Cotrol","Parasitized"),
+                     guide=guide_legend(keywidth = 2.5)
+) + labs(x="Age [days]",y="Log(Mass) [mg]"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+        strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.text = element_text(size=16),
+        legend.title = element_text(size=16),
+        legend.position = c(.9, .25))
+
+
+#-------------------
+
+#run a prelim gamm model of host mass and age by temp avg, temp var and treatment
+
+#subset to only columns in model, remove rows with NAs (so that predicted and fitted values can be added
+#to the dataframe easily)
+tvor_mass <- select(tvor_lng_ro, bug.id, temp.avg, temp.var, treatment, log_mss, age)
+tvor_mass <- na.omit(tvor_mass)
+
+#make bug.id a factor so it will work as a random effect in the GAMM model
+tvor_mass$bug.id <- as.factor(tvor_mass$bug.id)
+
+
+#run a full GAMM model (where the smooth of age is also affected by the interaction of temp and treat)
+gam_mass_mod<-gam(log_mss ~ s(age, by = interaction(treatment, temp.avg, temp.var, k=20, bs="ts")) 
+                  + s(bug.id, bs ="re") + treatment * temp.avg * temp.var,
+                  method="ML", data=tvor_mass, na.action = na.omit)
+
+anova(gam_mass_mod)
+summary(gam_mass_mod)
+
+gam.check(gam_mass_mod, type = "deviance")
+
+
+
+
+#Make a null model for model testing, where the smooth of age is not affected by temp.var, temp.avg or treat
+gam_mnull_mod<-gam(log_mss ~ s(age, k=10, bs="ts") 
+                   + s(bug.id, bs="re") + treatment * temp.avg * temp.var,
+                   method="ML", data=tvor_mass, na.action = na.omit)
+
+anova(gam_mnull_mod)
+
+
+anova(gam_mnull_mod, gam_mass_mod)
+AIC(gam_mnull_mod, gam_mass_mod)
+
+
+#add predicted and residual values to model data set, plot results
+tvor_mass$pred <- predict(gam_mass_mod, level=0)
+tvor_mass$resid <- residuals(gam_mass_mod, level=0)
+
+
+
+md_gammod_ra<-ggplot(tvor_mass, aes(x=age, y=resid, color=temp.avg))
+md_gammod_ra+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(treatment~temp.var)
+
+
+
+md_gammod_fit<-ggplot(tvor_mass, aes(x=age, y=log_mss, color=temp.avg))
+md_gammod_fit+geom_point(size=3, shape=1
+)+geom_line(aes(y=pred, group=temp.avg)
+)+facet_wrap(treatment~temp.var)
 
 
