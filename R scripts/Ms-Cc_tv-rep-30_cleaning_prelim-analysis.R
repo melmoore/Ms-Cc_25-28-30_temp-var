@@ -55,6 +55,7 @@ tvr$date.5.j[is.na(tvr$date.5.j)] <- 0
 tvr$died <- ifelse(tvr$date.died.j > 0, 1, 0)
 tvr$died.bf5 <- ifelse(tvr$date.died > 0 & tvr$date.5.j==0, 1, 0)
 
+tvr$date.5.j[tvr$date.5.j==0] <- NA
 
 #------------------------
 
