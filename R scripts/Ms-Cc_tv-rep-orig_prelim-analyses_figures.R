@@ -491,9 +491,153 @@ md_gammod_ra+geom_point(size=4, shape=1
 
 
 
+md_gammod_fit<-ggplot(tvor_mass, aes(x=age, y=log_mss, group=interaction(bug.id, temp.avg), color=temp.avg))
+md_gammod_fit+geom_point(size=3, shape=1
+)+geom_line(aes(y=pred, group=interaction(bug.id, temp.avg))
+)+facet_wrap(treatment~temp.var)
+
+
+#using geom_smooth instead of geom_line to try and get an average line over temp.avg and not by individual?
+#not sure if this is appropriate.
 md_gammod_fit<-ggplot(tvor_mass, aes(x=age, y=log_mss, color=temp.avg))
 md_gammod_fit+geom_point(size=3, shape=1
-)+geom_line(aes(y=pred, group=temp.avg)
+)+geom_smooth(aes(y=pred, group=temp.avg)
 )+facet_wrap(treatment~temp.var)
+
+
+
+
+
+#para treatment with load as a predictor
+
+#subset tvor_lng_ro to only para
+tvor_lng_rop <- subset(tvor_lng_ro, treatment=="para" & end.class!="wand")
+
+#range of load
+range(tvor_lng_rop$load)
+
+
+#remove individuals with load over 300
+tvor_lng_rop <- subset(tvor_lng_rop, load < 300)
+
+
+#subset to only columns in model, and remove rows with NAs (so that predicted and fitted values can be
+#added to the dataframe easily)
+p_mass<-select(tvor_lng_rop, bug.id, temp.avg, temp.var, load, log_mss, age)
+p_mass<-na.omit(p_mass)
+
+#convert bug.id to factor so it functions properly as a random effect
+p_mass$bug.id<-as.factor(p_mass$bug.id)
+
+
+#run gam mode with age and load within a single smooth, with an interaction of temp.avg and temp.var
+##check knots etc for fit
+gam_pml_mod<-gam(log_mss ~ s(age, load, by=interaction(temp.avg, temp.var, bs="ts")) 
+                 + s(bug.id, bs="re") + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
+anova(gam_pml_mod)
+summary(gam_pml_mod)
+
+gam.check(gam_pml_mod)
+
+#run a GAMM with age and load as separate smooths--does not have an interaction with temp this way (2 2D surfaces, instead
+## of one 3D surface)
+gam_pml_nointmod<-gam(log_mss ~ s(age, by=interaction(temp.avg, temp.var, k=10, bs="ts")) 
+                      + s(load, by=interaction(temp.avg, temp.var, k=10, bs="ts")) + s(bug.id, bs="re") 
+                      + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
+anova(gam_pml_nointmod)
+summary(gam_pml_nointmod)
+
+
+#make a null model with an intercept (age and load in the same smooth)
+gam_pml_null_mod<-gam(log_mss ~ s(age, load, bs="ts") 
+                      + s(bug.id,bs="re") + temp.avg * temp.var, 
+                      method="ML", data=p_mass, na.action = na.omit)
+
+
+#Make a null model with no intercept (age and load in separate smooths)
+gam_pml_null_nointmod<-gam(log_mss ~ s(age, bs="ts") 
+                           + s(load, bs="ts") + s(bug.id,bs="re") 
+                           + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
+
+
+
+#compare models with and without interaction of age and load to see which is better (and with null models)
+#model without interaction seems best
+anova(gam_pml_mod, gam_pml_nointmod, gam_pml_null_mod, gam_pml_null_nointmod)
+AIC(gam_pml_mod, gam_pml_nointmod, gam_pml_null_mod, gam_pml_null_nointmod)
+
+
+
+#Model with age and load in same smooth
+#make columns with predicted and residual values for plotting
+p_mass$pred<-predict(gam_pml_mod, level=0)
+p_mass$resid<-residuals(gam_pml_mod, level=0)
+
+
+#residuals against age
+#residuals don't look great
+pml_gammod_ra<-ggplot(p_mass, aes(x=age, y=resid, color=temp.avg))
+pml_gammod_ra+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+
+#residuals against load
+pml_gammod_rl<-ggplot(p_mass, aes(x=load, y=resid, color=temp.avg))
+pml_gammod_rl+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+
+pml_gammod_fit<-ggplot(p_mass, aes(x=age, y=log_mss, color=load))
+pml_gammod_fit+geom_point(size=3, shape=1
+)+geom_line(aes(y=pred, group=interaction(temp.avg, bug.id))
+)+scale_color_viridis(
+)+facet_wrap(temp.avg~temp.var)
+
+
+
+
+#Model with age and load in same smooth
+#make columns with predicted and residual values for plotting
+p_mass$pred_ni<-predict(gam_pml_nointmod, level=0)
+p_mass$resid_ni<-residuals(gam_pml_nointmod, level=0)
+
+#residuals against age
+#residuals much better than model with interaction between age and load
+pmlni_gammod_ra<-ggplot(p_mass, aes(x=age, y=resid_ni, color=temp.avg))
+pmlni_gammod_ra+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+
+#residuals against load
+#look ok except for all the WOWEs with 0 load
+pmlni_gammod_rl<-ggplot(p_mass, aes(x=load, y=resid_ni, color=temp.avg))
+pmlni_gammod_rl+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+
+#model fit, colored by load
+pmlni_gammod_fit<-ggplot(p_mass, aes(x=age, y=log_mss, color=load))
+pmlni_gammod_fit+geom_point(size=4, shape=1
+)+geom_line(aes(y=pred_ni, group=interaction(temp.avg, bug.id)),
+            size=1
+)+scale_color_viridis(begin=.1, end=1,
+                      option = "viridis"
+)+facet_wrap(temp.avg~temp.var)
+
 
 
