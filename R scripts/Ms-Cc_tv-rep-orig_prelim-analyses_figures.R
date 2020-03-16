@@ -32,6 +32,8 @@ tvor_lng <- read_csv("data files/Ms-Cc_tv-orig-rep_comb_lng.csv",
 #take log of caterpillar mass
 tvor_lng$log_mss <- log(tvor_lng$mass)
 
+#create tot.died column
+tvor$tot.died <- tvor$load - tvor$num.ecl
 
 
 #----------------------------
@@ -81,6 +83,27 @@ psem_boxplot + geom_boxplot()
 psecl_boxplot <- ggplot(tvor_p0, aes(x=expt, y=ps.ecl))
 psecl_boxplot + geom_boxplot()
 
+
+#----------------------
+
+#quick and dirty analysis of wasp survival between 30C orig and repl data
+
+expt_wtots_mod1 <- glm(cbind(num.ecl, tot.died) ~ expt * load,
+                       family = quasibinomial,
+                       data = tvor_p0,
+                       na.action = na.omit)
+anova(expt_wtots_mod1)
+summary(expt_wtots_mod1)
+
+
+tvor_p0$resc.ld <- rescale(tvor_p0$load, to=c(0,1))
+
+expt_wtots_modre <- glmer(cbind(num.ecl, tot.died) ~ expt * load + (1|bug.id),
+                          family = binomial,
+                          data = tvor_p0,
+                          na.action = na.omit)
+anova(expt_wtots_modre)
+summary(expt_wtots_modre)
 
 #---------------------------
 
@@ -638,6 +661,81 @@ pmlni_gammod_fit+geom_point(size=4, shape=1
 )+scale_color_viridis(begin=.1, end=1,
                       option = "viridis"
 )+facet_wrap(temp.avg~temp.var)
+
+
+
+
+#--------------------------
+
+#quick and dirty analysis of wasp survival, only looking at constant temps--to see if the repl data 
+#influences effects of mean temp on survival at constant temps (so I don't have to worry about 
+#WOWEs at 30.10)
+
+
+#subset to only constant temps and parasitized treatment
+tvor_con <- subset(tvor, temp.var==0 & treatment=="para" & end.class=="em")
+
+#make a "keep" column to remove individuals from the orig 30C treatment
+tvor_con$keep <- ifelse(tvor_con$temp.avg==30 & tvor_con$expt=="orig", 0, 1)
+
+#subset out the orig 30C data
+tvor_con <- subset(tvor_con, keep==1)
+
+
+#glm model with quasibinomial distribution to look at overdispersion
+wtotsurv_mod1<-glm(cbind(num.ecl,tot.died) ~ temp.avg * load,
+                        family=quasibinomial,
+                        data=tvor_con,
+                        na.action = na.omit)
+
+anova(wtotsurv_mod1)
+summary(wtotsurv_mod1)
+
+
+#scale load
+tvor_con$resc.ld <- rescale(tvor_con$load, to = c(0,1))
+
+#quite over dispersed, so adding a random effect of individual
+wtots_re_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * resc.ld +(1|bug.id),
+                       family = binomial,
+                       data=tvor_con,
+                       na.action = na.omit)
+
+anova(wtots_re_mod1)
+summary(wtots_re_mod1)
+
+
+
+#-------------
+
+#plot num.ecl by load for orig 25, 28 data and 30 repl data
+
+#create keep column to sort to only the orig 25, 28 and the repl 30 data
+tvor$expt_keep <- ifelse(tvor$temp.avg==30 & tvor$expt=="orig", 0, 1)
+
+#subset to only orig 25, 28 and repl 30 data
+tvor_ro <- subset(tvor, expt_keep==1)
+
+#subset to only para treatment that had emergence
+tvor_rop <- subset(tvor_ro, treatment=="para" & end.class=="em")
+
+
+#plot num.ecl by load, color by temp.avg, facet_wrap by temp.var
+ecl_load_plot <- ggplot(tvor_rop, aes(x=load, y=num.ecl, group=temp.avg, color=temp.avg))
+ecl_load_plot + geom_point(size=4, alpha=.7
+) + geom_smooth(method="lm", se=FALSE, size=1.5
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                     breaks=c("25","28","30"),labels=c("25","28","30"),
+                     guide=guide_legend(keywidth=3)
+) + facet_wrap(~temp.var)
+
+
+
+
+
+
+
+
 
 
 
