@@ -66,6 +66,9 @@ ttend_dist_plot + geom_density(adjust=2/3, alpha=.5)
 
 
 
+#distribution of mass.end (only repl data)
+mend_dist <- ggplot(wower, aes(x=mass.end, fill=end.class))
+mend_dist + geom_density(alpha=.5, adjust=2/3)
 
 
 
