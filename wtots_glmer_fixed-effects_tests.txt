@@ -1,0 +1,55 @@
+Data: tvor_con
+Models:
+wtots_re_mod_null: cbind(num.ecl, tot.died) ~ 1 + (1 | bug.id)
+wtots_re_mod_ld: cbind(num.ecl, tot.died) ~ resc.ld + (1 | bug.id)
+wtots_re_mod_ta: cbind(num.ecl, tot.died) ~ temp.avg + (1 | bug.id)
+wtots_re_mod_int: cbind(num.ecl, tot.died) ~ temp.avg:resc.ld + (1 | bug.id)
+wtots_re_mod1: cbind(num.ecl, tot.died) ~ temp.avg * resc.ld + (1 | bug.id)
+                  Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)   
+wtots_re_mod_null  2 980.65 986.08 -488.32   976.65                            
+wtots_re_mod_ld    3 975.95 984.11 -484.98   969.95 6.6914      1   0.009688 **
+wtots_re_mod_ta    4 975.75 986.63 -483.88   967.75 2.2009      1   0.137929   
+wtots_re_mod_int   5 971.07 984.66 -480.53   961.07 6.6840      1   0.009728 **
+wtots_re_mod1      7 974.77 993.80 -480.38   960.77 0.3012      2   0.860201   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+
+
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: cbind(num.ecl, tot.died) ~ temp.avg * resc.ld + (1 | bug.id)
+   Data: tvor_con
+
+     AIC      BIC   logLik deviance df.resid 
+   974.8    993.8   -480.4    960.8      105 
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-1.87396 -0.13177  0.01775  0.13180  1.60875 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ bug.id (Intercept) 0.9717   0.9858  
+Number of obs: 112, groups:  bug.id, 112
+
+Fixed effects:
+                   Estimate Std. Error z value Pr(>|z|)  
+(Intercept)         0.13963    0.30961   0.451   0.6520  
+temp.avg28         -0.06154    0.50000  -0.123   0.9020  
+temp.avg30          0.20401    0.46656   0.437   0.6619  
+resc.ld             0.37178    0.88983   0.418   0.6761  
+temp.avg28:resc.ld -1.17468    1.81469  -0.647   0.5174  
+temp.avg30:resc.ld -2.16437    1.12587  -1.922   0.0546 .
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) tmp.28 tmp.30 rsc.ld t.28:.
+temp.avg28  -0.620                            
+temp.avg30  -0.664  0.412                     
+resc.ld     -0.837  0.519  0.556              
+tmp.vg28:r.  0.411 -0.853 -0.273 -0.491       
+tmp.vg30:r.  0.662 -0.411 -0.851 -0.791  0.388
+> 
