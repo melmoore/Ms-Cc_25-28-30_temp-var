@@ -706,6 +706,37 @@ summary(wtots_re_mod1)
 
 
 
+#finding p values of fixed effects
+
+wtots_re_mod_ta <- glmer(cbind(num.ecl, tot.died) ~ temp.avg +(1|bug.id),
+                         family = binomial,
+                         data=tvor_con,
+                         na.action = na.omit)
+
+
+wtots_re_mod_ld <- glmer(cbind(num.ecl, tot.died) ~ resc.ld +(1|bug.id),
+                         family = binomial,
+                         data=tvor_con,
+                         na.action = na.omit)
+
+
+
+wtots_re_mod_int <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:resc.ld +(1|bug.id),
+                          family = binomial,
+                          data=tvor_con,
+                          na.action = na.omit)
+
+
+#null model
+wtots_re_mod_null <- glmer(cbind(num.ecl, tot.died) ~ 1 +(1|bug.id),
+                           family = binomial,
+                           data=tvor_con,
+                           na.action = na.omit)
+
+
+anova(wtots_re_mod_null, wtots_re_mod1, wtots_re_mod_ta, wtots_re_mod_ld, wtots_re_mod_int, test="Chisq")
+
+
 #-------------
 
 #plot num.ecl by load for orig 25, 28 data and 30 repl data
@@ -732,10 +763,83 @@ ecl_load_plot + geom_point(size=4, alpha=.7
 
 
 
+#-----------------------------
+
+
+#analysis of wasp survival for only 25 and 28 mean temp treatments--removing 30 so the 30.10 complete separation
+#doesn't cause the model to not work properly
+
+tvor_ncs <- subset(tvor, temp.avg!=30)
+
+tvor_ncs$resc.ld <- rescale(tvor_ncs$load, to = c(0,1))
+
+#set tvor_ncs so that 30 doesn't show up as a factor level, same with temp var 
+tvor_ncs$temp.avg <- factor(tvor_ncs$temp.avg, levels = c(25, 28))
+tvor_ncs$temp.var <- factor(tvor_ncs$temp.var, levels=c(0,10))
 
 
 
+wtots_ncs_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc.ld + (1|bug.id),
+                        data = tvor_ncs,
+                        family = binomial,
+                        na.action = na.omit)
+
+anova(wtots_ncs_mod1, test="Chisq")
+summary(wtots_ncs_mod1)
 
 
+
+#testing fixed effects
+
+wtots_ncs_mod_ta <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + (1|bug.id),
+                          data = tvor_ncs,
+                          family = binomial,
+                          na.action = na.omit)
+
+
+wtots_ncs_mod_tv <- glmer(cbind(num.ecl, tot.died) ~ temp.var + (1|bug.id),
+                          data = tvor_ncs,
+                          family = binomial,
+                          na.action = na.omit)
+
+
+wtots_ncs_mod_ld <- glmer(cbind(num.ecl, tot.died) ~ resc.ld + (1|bug.id),
+                          data = tvor_ncs,
+                          family = binomial,
+                          na.action = na.omit)
+
+
+wtots_ncs_mod_tatv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var + (1|bug.id),
+                            data = tvor_ncs,
+                            family = binomial,
+                            na.action = na.omit)
+
+
+wtots_ncs_mod_tald <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:resc.ld + (1|bug.id),
+                            data = tvor_ncs,
+                            family = binomial,
+                            na.action = na.omit)
+
+
+wtots_ncs_mod_tvld <- glmer(cbind(num.ecl, tot.died) ~ temp.var:resc.ld + (1|bug.id),
+                            data = tvor_ncs,
+                            family = binomial,
+                            na.action = na.omit)
+
+
+wtots_ncs_mod_tatvld <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var:resc.ld + (1|bug.id),
+                              data = tvor_ncs,
+                              family = binomial,
+                              na.action = na.omit)
+
+
+wtots_ncs_mod_null <- glmer(cbind(num.ecl, tot.died) ~ 1 + (1|bug.id),
+                            data = tvor_ncs,
+                            family = binomial,
+                            na.action = na.omit)
+
+
+anova(wtots_ncs_mod_null, wtots_ncs_mod1, wtots_ncs_mod_ta, wtots_ncs_mod_tv, wtots_ncs_mod_ld, wtots_ncs_mod_tatv,
+      wtots_ncs_mod_tald, wtots_ncs_mod_tvld, wtots_ncs_mod_tatvld, test="Chisq")
 
 
