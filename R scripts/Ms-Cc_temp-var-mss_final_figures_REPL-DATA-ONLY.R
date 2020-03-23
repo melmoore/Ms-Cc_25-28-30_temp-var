@@ -252,7 +252,116 @@ surv_fig
 
 
 
+#----------------------
 
+#WASP DEVELOPMENT TIME TO EMERGENCE AND ECLOSION
+
+#find mean development time to emergence
+ttemw_sum <- summarySE(tvor_p, measurevar = "ttem.w",
+                       groupvars = c("temp.avg", "temp.var"),
+                       na.rm = TRUE)
+ttemw_sum
+
+
+#making temp.avg numeric instead of a factor
+ttemw_sum$temp.avg <- as.numeric(ttemw_sum$temp.avg)
+ttemw_sum$temp.avg <- ifelse(ttemw_sum$temp.avg==1, 25,
+                             ifelse(ttemw_sum$temp.avg==2, 28, 30))
+
+#Plotting development time to emergence with mean temperature on x axis, fluctuation as grouping variable
+mn_ttem_plot <- ggplot(ttemw_sum, aes(x=temp.avg, y=ttem.w, color=temp.var))
+mn_ttem_plot <- mn_ttem_plot + geom_point(size=5, shape=17
+) + geom_line(size=2, linetype="dashed"
+) + geom_errorbar(aes(ymin=ttem.w - se, ymax=ttem.w + se),
+                width=.5, size=1.2
+) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                     breaks=c("0","10"),labels=c("0","10"),
+                     guide=guide_legend(keywidth = 2.5)
+) + scale_x_continuous(limits=c(24.5,30.5),
+                     breaks = c(25, 28, 30)
+) + scale_y_continuous(limits = c(10, 24),
+                     breaks = c(10, 12, 14, 16, 18, 20, 22, 24)
+) + labs(x="Mean Temperature [C]", y="Time to Emergence [days]"
+) + theme(axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 20),
+        axis.text.y = element_text(size = 20),
+        axis.title.x = element_text(size = 20),
+        axis.title.y = element_text(size = 20),
+        legend.background = element_rect(color="black",linetype="solid"),
+        legend.position = "none")
+
+mn_ttem_plot
+
+
+#find mean development time to eclosion
+ttecl_sum <- summarySE(tvor_p, measurevar = "ttecl",
+                       groupvars = c("temp.avg", "temp.var"),
+                       na.rm = TRUE)
+ttecl_sum
+
+
+#making temp.avg numeric instead of a factor
+ttecl_sum$temp.avg <- as.numeric(ttecl_sum$temp.avg)
+ttecl_sum$temp.avg <- ifelse(ttecl_sum$temp.avg==1, 25,
+                             ifelse(ttecl_sum$temp.avg==2, 28, 30))
+
+
+#Plotting development time to eclosion with mean temperature on x axis, fluctuation as grouping variable
+mn_ttecl_plot <- ggplot(ttecl_sum, aes(x=temp.avg, y=ttecl, color=temp.var))
+mn_ttecl_plot <- mn_ttecl_plot + geom_point(size=5, shape=17
+) + geom_line(size=2, linetype="dashed"
+) + geom_errorbar(aes(ymin=ttecl - se, ymax=ttecl + se),
+                  width=.5, size=1.2
+) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                       breaks=c("0","10"),labels=c("0","10"),
+                       guide=guide_legend(keywidth = 2.5)
+) + scale_x_continuous(limits=c(24.5,30.5),
+                       breaks = c(25, 28, 30)
+) + scale_y_continuous(limits = c(10, 24),
+                       breaks = c(10, 12, 14, 16, 18, 20, 22, 24)
+) + labs(x="Mean Temperature [C]", y="Time to Eclosion [days]"
+) + theme(axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 20),
+          axis.text.y = element_text(size = 20),
+          axis.title.x = element_text(size = 20),
+          axis.title.y = element_text(size = 20),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=15),
+          legend.title = element_text(size=18),
+          legend.position = c(0.85, 0.15))
+
+mn_ttecl_plot
+
+
+#combine into one figure
+dev_fig<-plot_grid(mn_ttem_plot, mn_ttecl_plot, labels=c("A", "B"), align="h")
+dev_fig
+
+
+
+
+#-----------------------------------
+
+#DISTRIBUTION OF LIFE SPAN IN 30 MEAN TEMP TREATMENTS
+
+#subset to only 30C mean temperature treatments
+tvor_30 <- subset(tvor, temp.avg==30)
+
+
+#density plot
+hostdev30_dist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
+                                      fill=interaction(temp.var, treatment)))
+hostdev30_dist + geom_density(alpha=.5)
+
+
+
+#histogram
 
 
 

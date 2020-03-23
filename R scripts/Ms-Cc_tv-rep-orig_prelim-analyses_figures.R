@@ -461,6 +461,28 @@ mn_lmaro_plot + geom_point(aes(shape=treatment),
         legend.position = c(.9, .25))
 
 
+#-----------------
+
+#DISTRIBUTION OF LIFE SPAN IN 30 MEAN TEMP TREATMENTS
+
+#subset to only 30C mean temperature treatments
+tvor_30 <- subset(tvor, temp.avg==30)
+
+
+#density plot
+hostdev30_dist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
+                                      fill=interaction(temp.var, treatment)))
+hostdev30_dist + geom_density(alpha=.5)
+
+
+
+#histogram
+hostdev30_hist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
+                                      fill=interaction(temp.var, treatment)))
+hostdev30_hist + geom_histogram(alpha=.7, binwidth = 1, position="identity", color="black")
+
+
+
 #-------------------
 
 #run a prelim gamm model of host mass and age by temp avg, temp var and treatment
