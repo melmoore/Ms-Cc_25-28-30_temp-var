@@ -482,17 +482,332 @@ hostdev30_hist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treat
 hostdev30_hist + geom_histogram(alpha=.7, binwidth = 1, position="identity", color="black"
 ) + scale_fill_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
                        breaks=c("0","10"),labels=c("0","10")
-) + facet_wrap(~treatment)
+) + labs(x="Age [days]",y="Count"
+) + facet_wrap(~treatment
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .9))
 
 
 #histogram with color by treatment and facetted by fluctuation
 hostdev30_hist2 <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
                                       fill=treatment))
 hostdev30_hist2 + geom_histogram(alpha=.7, binwidth = 1, position="identity", color="black"
-) + scale_fill_manual(values=c("black", "#999999"),
+) + scale_fill_manual(values=c("#009E73", "black"),
                       name="Parasitization", breaks=c("control", "para"),
                       labels=c("NP", "P")
+) + labs(x="Age [days]",y="Count"
+) + facet_wrap(~temp.var
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .9))
+
+
+#-----------------------
+
+#plot distrubutions of mass at the end of development for the 30C mean treatments
+
+massend_hist <- ggplot(tvor_30, aes(x=mass.end, fill=temp.var))
+massend_hist + geom_histogram(alpha=.7, binwidth = 600
+) + scale_fill_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                      breaks=c("0","10"),labels=c("0","10")
+) + labs(x="Mass [mg]",y="Count"
+) + facet_wrap(~treatment
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .9))
+
+
+massend_hist2 <- ggplot(tvor_30, aes(x=mass.end, fill=treatment))
+massend_hist2 + geom_histogram(alpha=.7, binwidth = 600
+) + scale_fill_manual(values=c("#009E73", "black"),
+                      name="Parasitization", breaks=c("control", "para"),
+                      labels=c("NP", "P")
+) + labs(x="Mass [mg]",y="Count"
+) + facet_wrap(~temp.var
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .9))
+
+
+
+
+
+massend_dist <- ggplot(tvor_30, aes(x=mass.end, fill=temp.var))
+massend_dist + geom_density(alpha=.7, adjust=3/4
+) + facet_wrap(~treatment)
+
+
+
+
+massend_dist2 <- ggplot(tvor_30, aes(x=mass.end, fill=treatment))
+massend_dist2 + geom_density(alpha=.7, adjust=3/4
 ) + facet_wrap(~temp.var)
+
+
+#---------------------
+
+#plot mass.end vs ttend for mean 30C treatments
+
+ma_end_plot <- ggplot(tvor_30, aes(x=ttend, y=mass.end, group=interaction(treatment, end.class), color=treatment))
+ma_end_plot + geom_point(aes(shape=end.class)
+) + geom_smooth(method="lm"
+) + facet_wrap(~temp.var)
+
+
+
+#--------------------
+
+#POSSIBLE SUPPLEMENTAL FIGURES
+##EFFECTS OF LOAD ON SURVIVAL TO EMERGENCE AND ECLOSION
+##EFFECTS OF LOAD ON HOST GROWTH AND DEVELOPMENT
+
+
+#LOAD EFFECTS ON SURVIVAL TO EMERGENCE (NUMBER EMERGED)
+
+#color by temp.var, facet by temp.avg
+numem_ld_plot <- ggplot(tvor_p, aes(x=load, y=num.em, color=temp.var))
+numem_ld_plot + geom_point(size=6
+) + geom_smooth(method="lm", se=FALSE, size=2
+) + facet_wrap(~temp.avg)
+
+
+#color by temp.avg, facet by temp.var
+numem_ld_plot2 <- ggplot(tvor_p, aes(x=load, y=num.em, color=temp.avg))
+numem_ld_plot2 + geom_point(size=6, alpha=.8
+) + geom_smooth(method="lm", se=FALSE, size=2
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)       
+) + facet_wrap(~temp.var
+) + labs(y="Total Load", x="Number Emerged"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .2))
+
+
+
+
+#-----------------------
+
+#plot the effect of parasitoid load on host growth (mean values)
+
+#subset long data frame into parasitized only
+tvor_lngp <- subset(tvor_lng, treatment=="para")
+
+
+#Making a column "bin" that puts hosts into bins determined by load, binned by 50 
+tvor_lngp$bin<-ifelse(tvor_lngp$load<=50 & tvor_lngp$load!=0, 50,
+                      ifelse(tvor_lngp$load>50 & tvor_lngp$load<=100, 100,
+                             ifelse(tvor_lngp$load>100 & tvor_lngp$load<=150, 150,
+                                    ifelse(tvor_lngp$load>150 & tvor_lngp$load<=200, 200,
+                                           ifelse(tvor_lngp$load>200 & tvor_lngp$load<=268, 250, 0)))))
+
+
+#making bin a factor for plotting purposes
+tvor_lngp$bin<-as.factor(tvor_lngp$bin)
+
+
+#finding the mean and variance of mass for each instar, grouped by mn temp, temp var and load bin
+massbin.sum<-summarySE(tvor_lngp, measurevar = "log_mss",
+                       groupvars = c("temp.avg", "temp.var", "instar", "bin"),
+                       na.rm = TRUE)
+massbin.sum
+
+
+#finding the mean and variance of age for each instar, grouped by mn temp, temp var and load bin
+agebin.sum<-summarySE(tvor_lngp, measurevar = "age",
+                      groupvars = c("temp.avg", "temp.var", "instar", "bin"),
+                      na.rm = TRUE)
+agebin.sum
+
+#add mean and se of age to the mean log mass data frame
+massbin.sum$age<-agebin.sum[,6]
+massbin.sum$age_se<-agebin.sum[,8]
+
+
+#plot mean mass by mean age, with color by load
+mn_lmald_plot <- ggplot(massbin.sum, aes(x=age, y=log_mss, color=bin))
+mn_lmald_plot + geom_point(size=6
+) + geom_line(size=1.7
+) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
+                  width=.7, size=1
+) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
+                   height=.7, size=1
+) + scale_color_viridis(discrete = TRUE
+) + facet_wrap(temp.avg~temp.var)
+
+
+
+
+#subset by mean temp for better plotting lay out
+massbin.sum25 <- subset(massbin.sum, temp.avg==25)
+massbin.sum28 <- subset(massbin.sum, temp.avg==28)
+massbin.sum30 <- subset(massbin.sum, temp.avg==30)
+
+
+
+#plot mean log mass by mean age, color by load, plot each mean temp separately
+
+#25
+mn_lmald25_plot <- ggplot(massbin.sum25, aes(x=age, y=log_mss, color=bin))
+mn_lmald25_plot <-  mn_lmald25_plot + geom_point(size=6
+) + geom_line(size=1.7
+) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
+                  width=.9, size=1
+) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
+                   height=.3, size=1
+) + scale_color_viridis(discrete = TRUE, breaks=c(50, 100, 150, 200, 250),
+                        name="Load", labels=c("<50", "<100", "<150", "<200", "<250")
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "25C"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                        size = 1),
+        strip.text = element_text(size=18),
+        axis.line.x=element_line(colour = 'black', size = 1),
+        axis.line.y=element_line(colour = 'black', size = 1),
+        axis.ticks = element_line(colour = 'black', size = 1),
+        axis.ticks.length = unit(2, "mm"),
+        axis.text.x = element_text(size = 18),
+        axis.text.y = element_text(size = 18),
+        axis.title.x = element_text(size = 18),
+        axis.title.y = element_text(size = 18),
+        legend.position = "none")
+
+mn_lmald25_plot
+
+
+
+#28
+mn_lmald28_plot <- ggplot(massbin.sum28, aes(x=age, y=log_mss, color=bin))
+mn_lmald28_plot <-  mn_lmald28_plot + geom_point(size=6
+) + geom_line(size=1.7
+) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
+                  width=.9, size=1
+) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
+                   height=.3, size=1
+) + scale_color_viridis(discrete = TRUE, breaks=c(50, 100, 150, 200, 250),
+                        name="Load", labels=c("<50", "<100", "<150", "<200", "<250")
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "28C"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.position = "none")
+
+mn_lmald28_plot
+
+
+#30
+mn_lmald30_plot <- ggplot(massbin.sum30, aes(x=age, y=log_mss, color=bin))
+mn_lmald30_plot <-  mn_lmald30_plot + geom_point(size=6
+) + geom_line(size=1.7
+) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
+                  width=.9, size=1
+) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
+                   height=.3, size=1
+) + scale_color_viridis(discrete = TRUE, breaks=c(50, 100, 150, 200, 250),
+                        name="Load", labels=c("<50", "<100", "<150", "<200", "<250")
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "30C"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(0.9, 0.4))
+
+mn_lmald30_plot
+
+
+#combining into 1 figure (using cowplot)
+suppl_load_fig<-plot_grid(mn_lmald25_plot, mn_lmald28_plot, mn_lmald30_plot)
+suppl_load_fig
 
 
 #-------------------
