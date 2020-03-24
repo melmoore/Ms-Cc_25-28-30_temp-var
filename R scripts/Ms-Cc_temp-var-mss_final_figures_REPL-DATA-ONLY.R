@@ -350,19 +350,73 @@ dev_fig
 
 #DISTRIBUTION OF LIFE SPAN IN 30 MEAN TEMP TREATMENTS
 
-#subset to only 30C mean temperature treatments
-tvor_30 <- subset(tvor, temp.avg==30)
 
 
-#density plot
-hostdev30_dist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
-                                      fill=interaction(temp.var, treatment)))
-hostdev30_dist + geom_density(alpha=.5)
+#--------------------------------
+
+#POSSIBLE SUPPLEMENTAL FIGURES
+##EFFECTS OF LOAD ON SURVIVAL TO EMERGENCE AND ECLOSION
+##EFFECTS OF LOAD ON HOST GROWTH AND DEVELOPMENT
+
+
+#LOAD EFFECTS ON SURVIVAL TO EMERGENCE (NUMBER EMERGED)
+
+#Color by mean temperature, facet by fluctuations
+numem_ld_plot <- ggplot(tvor_p, aes(x=load, y=num.em, color=temp.avg))
+numem_ld_plot + geom_point(size=6, alpha=.8
+) + geom_smooth(method="lm", se=FALSE, size=2
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)       
+) + facet_wrap(~temp.var
+) + labs(x="Total Load", y="Number Emerged"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .2))
 
 
 
-#histogram
 
+#LOAD EFFECTS ON SURVIVAL TO ECLOSION (NUMBER ECLOSED)
+
+#Color by mean temperature, facet by fluctuations
+numecl_ld_plot <- ggplot(tvor_p, aes(x=load, y=num.ecl, color=temp.avg))
+numecl_ld_plot + geom_point(size=6, alpha=.8
+) + geom_smooth(method="lm", se=FALSE, size=2
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)       
+) + facet_wrap(~temp.var
+) + labs(x="Total Load", y="Number Eclosed"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .2))
 
 
 
