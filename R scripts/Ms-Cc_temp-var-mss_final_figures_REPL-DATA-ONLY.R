@@ -187,7 +187,8 @@ mn_psem_plot <- mn_psem_plot + geom_point(size=6
 ) + scale_y_continuous(limits = c(0, 0.9),
                        breaks = c(0, 0.2, 0.4, 0.6, 0.8)
 ) + labs(x="Mean Temperature [C]", y="Prop. Emergence"
-) + theme(axis.line.x=element_line(colour = 'black', size = 1),
+) + theme(text = element_text(family=("Cambria")),
+          axis.line.x=element_line(colour = 'black', size = 1),
           axis.line.y=element_line(colour = 'black', size = 1),
           axis.ticks = element_line(colour = 'black', size = 1),
           axis.ticks.length = unit(2, "mm"),
@@ -231,7 +232,8 @@ mn_psecl_plot <- mn_psecl_plot + geom_point(size=6
                        breaks = c(25, 28, 30)
 ) + scale_y_continuous(limits = c(0, 0.9),
                        breaks = c(0, 0.2, 0.4, 0.6, 0.8)) + labs(x="Mean Temperature [C]", y="Prop. Eclosion"
-) + theme(axis.line.x=element_line(colour = 'black', size = 1),
+) + theme(text = element_text(family=("Cambria")),
+          axis.line.x=element_line(colour = 'black', size = 1),
           axis.line.y=element_line(colour = 'black', size = 1),
           axis.ticks = element_line(colour = 'black', size = 1),
           axis.ticks.length = unit(2, "mm"),
@@ -271,7 +273,7 @@ ttemw_sum$temp.avg <- ifelse(ttemw_sum$temp.avg==1, 25,
 #Plotting development time to emergence with mean temperature on x axis, fluctuation as grouping variable
 mn_ttem_plot <- ggplot(ttemw_sum, aes(x=temp.avg, y=ttem.w, color=temp.var))
 mn_ttem_plot <- mn_ttem_plot + geom_point(size=5, shape=17
-) + geom_line(size=2, linetype="dashed"
+) + geom_line(size=2
 ) + geom_errorbar(aes(ymin=ttem.w - se, ymax=ttem.w + se),
                 width=.5, size=1.2
 ) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
@@ -282,7 +284,8 @@ mn_ttem_plot <- mn_ttem_plot + geom_point(size=5, shape=17
 ) + scale_y_continuous(limits = c(10, 24),
                      breaks = c(10, 12, 14, 16, 18, 20, 22, 24)
 ) + labs(x="Mean Temperature [C]", y="Time to Emergence [days]"
-) + theme(axis.line.x=element_line(colour = 'black', size = 1),
+) + theme(text = element_text(family=("Cambria")),
+          axis.line.x=element_line(colour = 'black', size = 1),
         axis.line.y=element_line(colour = 'black', size = 1),
         axis.ticks = element_line(colour = 'black', size = 1),
         axis.ticks.length = unit(2, "mm"),
@@ -312,7 +315,7 @@ ttecl_sum$temp.avg <- ifelse(ttecl_sum$temp.avg==1, 25,
 #Plotting development time to eclosion with mean temperature on x axis, fluctuation as grouping variable
 mn_ttecl_plot <- ggplot(ttecl_sum, aes(x=temp.avg, y=ttecl, color=temp.var))
 mn_ttecl_plot <- mn_ttecl_plot + geom_point(size=5, shape=17
-) + geom_line(size=2, linetype="dashed"
+) + geom_line(size=2
 ) + geom_errorbar(aes(ymin=ttecl - se, ymax=ttecl + se),
                   width=.5, size=1.2
 ) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
@@ -323,7 +326,8 @@ mn_ttecl_plot <- mn_ttecl_plot + geom_point(size=5, shape=17
 ) + scale_y_continuous(limits = c(10, 24),
                        breaks = c(10, 12, 14, 16, 18, 20, 22, 24)
 ) + labs(x="Mean Temperature [C]", y="Time to Eclosion [days]"
-) + theme(axis.line.x=element_line(colour = 'black', size = 1),
+) + theme(text = element_text(family=("Cambria")),
+          axis.line.x=element_line(colour = 'black', size = 1),
           axis.line.y=element_line(colour = 'black', size = 1),
           axis.ticks = element_line(colour = 'black', size = 1),
           axis.ticks.length = unit(2, "mm"),
