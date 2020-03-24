@@ -925,6 +925,8 @@ summary(gam_mass_mod)
 
 gam.check(gam_mass_mod, type = "deviance")
 
+plot.gam(gam_mass_mod)
+
 
 
 
@@ -1223,7 +1225,8 @@ tvor_ncs$temp.var <- factor(tvor_ncs$temp.var, levels=c(0,10))
 wtots_ncs_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc.ld + (1|bug.id),
                         data = tvor_ncs,
                         family = binomial,
-                        na.action = na.omit)
+                        na.action = na.omit,
+                        control = glmerControl(optimizer = "bobyqa"))
 
 anova(wtots_ncs_mod1, test="Chisq")
 summary(wtots_ncs_mod1)
@@ -1282,5 +1285,52 @@ wtots_ncs_mod_null <- glmer(cbind(num.ecl, tot.died) ~ 1 + (1|bug.id),
 
 anova(wtots_ncs_mod_null, wtots_ncs_mod1, wtots_ncs_mod_ta, wtots_ncs_mod_tv, wtots_ncs_mod_ld, wtots_ncs_mod_tatv,
       wtots_ncs_mod_tald, wtots_ncs_mod_tvld, wtots_ncs_mod_tatvld, test="Chisq")
+
+
+#--------------------------
+
+#calculating N, mean and range of WOWE mass and dev time for manuscript
+
+
+tvor_all <- read_csv("data files/Ms-Cc_tv-orig-rep_comb_cl.csv", 
+                 col_types = cols(temp.avg = col_factor(levels = c("25", "28", "30"))))
+
+#make sorting column to remove orig 30 data
+tvor_all$keep <- ifelse(tvor_all$temp.avg==30 & tvor_all$expt=="orig", 0, 1)
+
+tvor_all <- subset(tvor_all, keep==1)
+
+
+#subset to only mean 30C treatments
+tvor_all30 <- subset(tvor_all, temp.avg==30)
+
+
+#table to calculate sample sizes
+table(tvor_all30$temp.var, tvor_all30$treatment)
+
+#number of wanderers
+tvor_all30p <- subset(tvor_all30, treatment=="para")
+
+table(tvor_all30p$temp.var, tvor_all30p$end.class)
+
+
+#remove those that were para and wandered
+tvor_all30$keep_p <- ifelse(tvor_all30$treatment=="para" & tvor_all30$end.class=="wand", 0, 1)
+tvor_all30_nw <- subset(tvor_all30, keep_p==1)
+
+
+#find range of ttend for all treatments
+
+
+
+
+
+
+
+
+
+
+
+
 
 
