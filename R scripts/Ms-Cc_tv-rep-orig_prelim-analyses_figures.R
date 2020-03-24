@@ -476,11 +476,23 @@ hostdev30_dist + geom_density(alpha=.5)
 
 
 
-#histogram
+#histogram with color by fluctuation and facetted by treatment
 hostdev30_hist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
-                                      fill=interaction(temp.var, treatment)))
-hostdev30_hist + geom_histogram(alpha=.7, binwidth = 1, position="identity", color="black")
+                                      fill=temp.var))
+hostdev30_hist + geom_histogram(alpha=.7, binwidth = 1, position="identity", color="black"
+) + scale_fill_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                       breaks=c("0","10"),labels=c("0","10")
+) + facet_wrap(~treatment)
 
+
+#histogram with color by treatment and facetted by fluctuation
+hostdev30_hist2 <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
+                                      fill=treatment))
+hostdev30_hist2 + geom_histogram(alpha=.7, binwidth = 1, position="identity", color="black"
+) + scale_fill_manual(values=c("black", "#999999"),
+                      name="Parasitization", breaks=c("control", "para"),
+                      labels=c("NP", "P")
+) + facet_wrap(~temp.var)
 
 
 #-------------------
