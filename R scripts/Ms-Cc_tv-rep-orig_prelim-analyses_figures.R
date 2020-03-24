@@ -655,10 +655,102 @@ numem_ld_plot2 + geom_point(size=6, alpha=.8
 
 #-----------------------
 
-#plot the effect of parasitoid load on host growth (mean values)
+#plot the effects of parasitoid load on host growth (individual values)
 
 #subset long data frame into parasitized only
 tvor_lngp <- subset(tvor_lng, treatment=="para")
+
+#subset into mean temperature treatments for better plotting layout
+tvor_lp25 <- subset(tvor_lngp, temp.avg==25)
+tvor_lp28 <- subset(tvor_lngp, temp.avg==28)
+tvor_lp30 <- subset(tvor_lngp, temp.avg==30)
+
+
+#plot log mass by age, color by load 
+#25
+mald25_plot <- ggplot(tvor_lp25, aes(x=age, y=log_mss, group=bug.id,
+                                     color=load))
+mald25_plot <-  mald25_plot + geom_line(size=2
+) + scale_color_viridis(
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "25C"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.position = "none")
+
+mald25_plot
+
+
+#28
+mald28_plot <- ggplot(tvor_lp28, aes(x=age, y=log_mss, group=bug.id,
+                                     color=load))
+mald28_plot <-  mald28_plot + geom_line(size=2
+) + scale_color_viridis(
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "28C"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.position = "none")
+
+mald28_plot
+
+
+#30
+mald30_plot <- ggplot(tvor_lp30, aes(x=age, y=log_mss, group=bug.id,
+                                     color=load))
+mald30_plot <- mald30_plot + geom_line(size=2
+) + scale_color_viridis(name="Load"
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "30"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(0.95, 0.3))
+
+mald30_plot
+
+
+#combine plots with cowplot
+suppl_indload_fig <- plot_grid(mald25_plot, mald28_plot, mald30_plot)
+suppl_indload_fig
+
+
+#--------------------
+
+#plot the effect of parasitoid load on host growth (mean values)
+
 
 
 #Making a column "bin" that puts hosts into bins determined by load, binned by 50 
