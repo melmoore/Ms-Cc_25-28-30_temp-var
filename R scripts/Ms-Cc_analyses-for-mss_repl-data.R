@@ -14,6 +14,8 @@ library(car)
 library(tidyr)
 library(mgcv)
 library(dplyr)
+library(ggplot2)
+library(extrafont)
 
 
 
@@ -79,6 +81,8 @@ tvor_p <- subset(tvor, treatment=="para")
 tvor_lngp <- subset(tvor_lng, treatment=="para")
 
 
+#set plot theme
+theme_set(theme_classic())
 
 #------------------------
 
@@ -114,22 +118,148 @@ tvor_mass$pred <- predict(gam_mass_mod, level=0)
 tvor_mass$resid <- residuals(gam_mass_mod, level=0)
 
 
+#make a label for the facet wrap panels
+fnames <- c("control" = "NP", "para" = "P", "0" = "0", "10" = "10")
+
+
+
 #plot model residuals against age, color by mean temperature, facet by parasitization treatment and fluctuation
 md_gammod_ra<-ggplot(tvor_mass, aes(x=age, y=resid, color=temp.avg))
-md_gammod_ra+geom_point(size=4, shape=1
-)+geom_hline(aes(yintercept=0),
+md_gammod_ra + geom_point(size=4, shape=1
+) + geom_hline(aes(yintercept=0),
              color="black",
              size=1.5, linetype="dashed"
-)+facet_wrap(treatment~temp.var)
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + labs(x="Age [Days]", y="GAMM Model Residuals"
+) + facet_wrap(treatment~temp.var, labeller = as_labeller(fnames)
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16))
 
 
 
 md_gammod_fit<-ggplot(tvor_mass, aes(x=age, y=log_mss, group=interaction(bug.id, temp.avg), color=temp.avg))
 md_gammod_fit+geom_point(size=3, shape=1
-)+geom_line(aes(y=pred, group=interaction(bug.id, temp.avg))
-)+facet_wrap(treatment~temp.var)
+) + geom_line(aes(y=pred, group=interaction(bug.id, temp.avg))
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + labs(x="Age [Days]", y="Log(Mass [mg])"
+) + facet_wrap(treatment~temp.var, labeller = as_labeller(fnames)
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16))
 
 
+
+#using geom_smooth instead of geom_line to try and get an average line over temp.avg and not by individual?
+#not sure if this is appropriate.
+md_gammod_fit<-ggplot(tvor_mass, aes(x=age, y=log_mss, color=temp.avg))
+md_gammod_fit + geom_point(size=3, shape=1
+) + geom_smooth(aes(y=pred, group=temp.avg)
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + facet_wrap(treatment~temp.var, labeller = as_labeller(fnames)
+) + labs(x="Age [Days]", y="Log(Mass [mg])"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16))
+
+
+
+
+
+
+#para treatment with load as a predictor
+
+#subset to only columns in model, and remove rows with NAs (so that predicted and fitted values can be
+#added to the dataframe easily)
+p_mass<-select(tvor_lngp, bug.id, temp.avg, temp.var, load, log_mss, age)
+p_mass<-na.omit(p_mass)
+
+#convert bug.id to factor so it functions properly as a random effect
+p_mass$bug.id<-as.factor(p_mass$bug.id)
+
+
+#run a GAMM with age and load as separate smooths--does not have an interaction with temp this way (2 2D surfaces, instead
+## of one 3D surface)
+gam_pml_nointmod<-gam(log_mss ~ s(age, by=interaction(temp.avg, temp.var, k=10, bs="ts")) 
+                      + s(load, by=interaction(temp.avg, temp.var, k=10, bs="ts")) + s(bug.id, bs="re") 
+                      + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
+anova(gam_pml_nointmod)
+summary(gam_pml_nointmod)
+
+
+#Model with age and load in same smooth
+#make columns with predicted and residual values for plotting
+p_mass$pred<-predict(gam_pml_mod, level=0)
+p_mass$resid<-residuals(gam_pml_mod, level=0)
+
+
+#residuals against age
+#residuals don't look great
+pml_gammod_ra<-ggplot(p_mass, aes(x=age, y=resid, color=temp.avg))
+pml_gammod_ra+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+
+#residuals against load
+pml_gammod_rl<-ggplot(p_mass, aes(x=load, y=resid, color=temp.avg))
+pml_gammod_rl+geom_point(size=4, shape=1
+)+geom_hline(aes(yintercept=0),
+             color="black",
+             size=1.5, linetype="dashed"
+)+facet_wrap(~temp.var)
+
+
+pml_gammod_fit<-ggplot(p_mass, aes(x=age, y=log_mss, color=load))
+pml_gammod_fit+geom_point(size=3, shape=1
+)+geom_line(aes(y=pred, group=interaction(temp.avg, bug.id))
+)+scale_color_viridis(
+)+facet_wrap(temp.avg~temp.var)
 
 
 
