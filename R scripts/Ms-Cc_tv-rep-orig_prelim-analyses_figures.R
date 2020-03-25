@@ -1318,17 +1318,61 @@ table(tvor_all30p$temp.var, tvor_all30p$end.class)
 tvor_all30$keep_p <- ifelse(tvor_all30$treatment=="para" & tvor_all30$end.class=="wand", 0, 1)
 tvor_all30_nw <- subset(tvor_all30, keep_p==1)
 
+#remove WOWEs from 30C
+tvor_all30_nw$keep_p2 <- ifelse(tvor_all30_nw$temp.avg==30 & tvor_all30_nw$temp.var==0 & 
+                                  tvor_all30_nw$treatment=="para" & tvor_all30_nw$end.class!="em", 0, 1)
+
+tvor_all30_nw <- subset(tvor_all30_nw, keep_p2==1)
+
 
 #find range of ttend for all treatments
+ttend_rnge <- tvor_all30_nw %>% group_by(temp.var, treatment) %>% summarise(min = min(ttend), max = max(ttend))
+ttend_rnge
+
+
+#find range of ttem (from ovp, so ttem.w)
+ttem_rnge <- tvor_all30_nw %>% group_by(temp.var, treatment) %>% summarise(min = min(ttem.w), max = max(ttem.w))
+ttem_rnge
+
+
+#calculate ttend from oviposition for WOWEs
+tvor_all30_nw$ttend_po <- tvor_all30_nw$date.cull.j - tvor_all30_nw$date.ovp.j
+
+ttend_po_rnge <- tvor_all30_nw %>% group_by(temp.var, treatment) %>% 
+                                    summarise(min = min(ttend_po), max = max(ttend_po))
+
+ttend_po_rnge
+
+
+#find range of mass end for all treatments
+
+#remove individual that was not weighed at 48 em
+which(is.na(tvor_all30_nw$mass.end))
+tvor_all30_nw <- tvor_all30_nw[-88, ]
+
+massend_rnge <- tvor_all30_nw %>% group_by(temp.var, treatment) %>% summarise(min = min(mass.end), 
+                                                                             max = max(mass.end))
+massend_rnge
 
 
 
+#find mass end for all temp avg treatments
+
+#find which ind. do not have a mass.end
+which(is.na(tvor$mass.end))
+tvor_me <- tvor[-which(is.na(tvor$mass.end)), ] 
+
+massend_rnge_all <- tvor_me %>% group_by(temp.avg, temp.var, treatment) %>% summarise(min = min(mass.end), 
+                                                                              max = max(mass.end))
+massend_rnge_all
 
 
+#find mean of mass end for all treatments
+massend_sum <- summarySE(tvor_all30_nw, measurevar = "mass.end",
+                         groupvars = c("temp.var", "treatment"),
+                         na.rm = TRUE)
 
-
-
-
+massend_sum
 
 
 
