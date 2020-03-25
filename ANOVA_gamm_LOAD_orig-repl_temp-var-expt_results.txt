@@ -1,0 +1,60 @@
+Family: gaussian 
+Link function: identity 
+
+Formula:
+log_mss ~ s(age, by = interaction(temp.avg, temp.var, k = 10, 
+    bs = "ts")) + s(load, by = interaction(temp.avg, temp.var, 
+    k = 10, bs = "ts")) + s(bug.id, bs = "re") + 
+    temp.avg * temp.var
+
+Parametric Terms:
+                  df     F  p-value
+temp.avg           2 9.183 0.000119
+temp.var           1 0.744 0.388816
+temp.avg:temp.var  1 6.046 0.014233
+
+Approximate significance of smooth terms:
+                                                                          edf  Ref.df       F  p-value
+s(age):interaction(temp.avg, temp.var, k = 10, bs = "ts")25.0.10.ts     3.696   4.380 511.692  < 2e-16
+s(age):interaction(temp.avg, temp.var, k = 10, bs = "ts")28.0.10.ts     2.789   3.313 427.772  < 2e-16
+s(age):interaction(temp.avg, temp.var, k = 10, bs = "ts")30.0.10.ts     3.989   4.441 789.880  < 2e-16
+s(age):interaction(temp.avg, temp.var, k = 10, bs = "ts")25.10.10.ts    3.714   4.376 626.155  < 2e-16
+s(age):interaction(temp.avg, temp.var, k = 10, bs = "ts")28.10.10.ts    3.516   4.229 403.790  < 2e-16
+s(age):interaction(temp.avg, temp.var, k = 10, bs = "ts")30.10.10.ts    5.354   6.257 414.450  < 2e-16
+s(load):interaction(temp.avg, temp.var, k = 10, bs = "ts")25.0.10.ts    1.000   1.000  27.901 1.80e-07
+s(load):interaction(temp.avg, temp.var, k = 10, bs = "ts")28.0.10.ts    1.000   1.000  10.418 0.001318
+s(load):interaction(temp.avg, temp.var, k = 10, bs = "ts")30.0.10.ts    1.000   1.000  17.786 2.87e-05
+s(load):interaction(temp.avg, temp.var, k = 10, bs = "ts")25.10.10.ts   1.000   1.000  12.361 0.000473
+s(load):interaction(temp.avg, temp.var, k = 10, bs = "ts")28.10.10.ts   1.000   1.000   5.669 0.017591
+s(load):interaction(temp.avg, temp.var, k = 10, bs = "ts")30.10.10.ts   1.000   1.000   0.011 0.915338
+s(bug.id)                                                             129.411 183.000   2.461  < 2e-16
+> 
+
+
+AGE
+		edf  Ref.df       F  p-value
+25.0.10.ts     3.696   4.380 511.692  < 2e-16
+28.0.10.ts     2.789   3.313 427.772  < 2e-16
+30.0.10.ts     3.989   4.441 789.880  < 2e-16
+25.10.10.ts    3.714   4.376 626.155  < 2e-16
+28.10.10.ts    3.516   4.229 403.790  < 2e-16
+30.10.10.ts    5.354   6.257 414.450  < 2e-16
+s(bug.id)     129.411 183.000   2.461  < 2e-16
+
+LOAD
+
+		edf  Ref.df       F  p-value
+25.0.10.ts    1.000   1.000  27.901 1.80e-07
+28.0.10.ts    1.000   1.000  10.418 0.001318
+30.0.10.ts    1.000   1.000  17.786 2.87e-05
+25.10.10.ts   1.000   1.000  12.361 0.000473
+28.10.10.ts   1.000   1.000   5.669 0.017591
+30.10.10.ts   1.000   1.000   0.011 0.915338
+
+
+
+
+
+
+
+
