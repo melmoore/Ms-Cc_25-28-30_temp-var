@@ -1,0 +1,47 @@
+#GAMM OF HOST MASS AND AGE FOR ORIG 25-28 DATA AND REPL 30 DATA
+
+Formula:
+log_mss ~ s(age, by = interaction(treatment, temp.avg, temp.var, 
+    k = 20, bs = "ts")) + s(bug.id, bs = "re") + 
+    treatment * temp.avg * temp.var
+
+Parametric Terms:
+                            df      F  p-value
+treatment                    1 76.232  < 2e-16
+temp.avg                     2 19.085 6.86e-09
+temp.var                     1 10.916 0.000981
+treatment:temp.avg           2  8.871 0.000150
+treatment:temp.var           1  2.655 0.103456
+temp.avg:temp.var            2  2.987 0.050797
+treatment:temp.avg:temp.var  2  5.949 0.002684
+
+Approximate significance of smooth terms:
+                                                                                            edf  Ref.df        F
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.25.0.20.ts    2.852   3.413 1432.845
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.25.0.20.ts       4.042   4.716  561.131
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.28.0.20.ts    3.889   4.408  889.186
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.28.0.20.ts       2.958   3.536  447.979
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.30.0.20.ts    3.515   3.911 1716.102
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.30.0.20.ts       6.547   7.123  595.155
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.25.10.20.ts   4.198   4.951  908.447
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.25.10.20.ts      3.821   4.484  759.097
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.28.10.20.ts   4.374   5.247  506.313
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.28.10.20.ts      3.739   4.460  481.533
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.30.10.20.ts   4.967   5.576 1011.106
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.30.10.20.ts      5.865   6.814  557.448
+s(bug.id)                                                                               342.697 412.000    4.725
+                                                                                        p-value
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.25.0.20.ts   <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.25.0.20.ts      <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.28.0.20.ts   <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.28.0.20.ts      <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.30.0.20.ts   <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.30.0.20.ts      <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.25.10.20.ts  <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.25.10.20.ts     <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.28.10.20.ts  <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.28.10.20.ts     <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.30.10.20.ts  <2e-16
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.30.10.20.ts     <2e-16
+s(bug.id)                                                                                <2e-16
+> 
