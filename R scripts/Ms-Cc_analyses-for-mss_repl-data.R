@@ -207,6 +207,7 @@ md_gammod_fit + geom_point(size=3, shape=1
 
 
 
+#--------------------------
 
 
 #para treatment with load as a predictor
@@ -230,16 +231,15 @@ anova(gam_pml_nointmod)
 summary(gam_pml_nointmod)
 
 
-#Model with age and load in same smooth
+#Model with age and load in separate smooths
 #make columns with predicted and residual values for plotting
-p_mass$pred<-predict(gam_pml_mod, level=0)
-p_mass$resid<-residuals(gam_pml_mod, level=0)
-
+p_mass$pred_ni<-predict(gam_pml_nointmod, level=0)
+p_mass$resid_ni<-residuals(gam_pml_nointmod, level=0)
 
 #residuals against age
-#residuals don't look great
-pml_gammod_ra<-ggplot(p_mass, aes(x=age, y=resid, color=temp.avg))
-pml_gammod_ra+geom_point(size=4, shape=1
+#residuals much better than model with interaction between age and load
+pmlni_gammod_ra<-ggplot(p_mass, aes(x=age, y=resid_ni, color=temp.avg))
+pmlni_gammod_ra+geom_point(size=4, shape=1
 )+geom_hline(aes(yintercept=0),
              color="black",
              size=1.5, linetype="dashed"
@@ -247,19 +247,60 @@ pml_gammod_ra+geom_point(size=4, shape=1
 
 
 #residuals against load
-pml_gammod_rl<-ggplot(p_mass, aes(x=load, y=resid, color=temp.avg))
-pml_gammod_rl+geom_point(size=4, shape=1
+#look ok except for all the WOWEs with 0 load
+pmlni_gammod_rl<-ggplot(p_mass, aes(x=load, y=resid_ni, color=temp.avg))
+pmlni_gammod_rl+geom_point(size=4, shape=1
 )+geom_hline(aes(yintercept=0),
              color="black",
              size=1.5, linetype="dashed"
-)+facet_wrap(~temp.var)
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + labs(x="Age [Days]", y="GAMM Model Residuals"
+) + facet_wrap(~temp.var, labeller = as_labeller(fnames)
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(0.85, 0.2))
 
 
-pml_gammod_fit<-ggplot(p_mass, aes(x=age, y=log_mss, color=load))
-pml_gammod_fit+geom_point(size=3, shape=1
-)+geom_line(aes(y=pred, group=interaction(temp.avg, bug.id))
-)+scale_color_viridis(
-)+facet_wrap(temp.avg~temp.var)
 
-
+#model fit, colored by load
+pmlni_gammod_fit<-ggplot(p_mass, aes(x=age, y=log_mss, color=load))
+pmlni_gammod_fit+geom_point(size=4, shape=1
+) + geom_line(aes(y=pred_ni, group=interaction(temp.avg, bug.id)),
+            size=1
+) + scale_color_viridis(begin=.1, end=1,
+                      option = "viridis",
+                      name="Total Load"
+) + facet_wrap(temp.avg~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg]"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(0.95, 0.8))
 
