@@ -472,7 +472,7 @@ tvor_30 <- subset(tvor, temp.avg==30)
 #density plot
 hostdev30_dist <- ggplot(tvor_30, aes(x=ttend, group=interaction(temp.var, treatment),
                                       fill=interaction(temp.var, treatment)))
-hostdev30_dist + geom_density(alpha=.5)
+hostdev30_dist + geom_histogram(alpha=.5)
 
 
 
@@ -601,10 +601,38 @@ massend_dist2 + geom_density(alpha=.7, adjust=3/4
 
 #plot mass.end vs ttend for mean 30C treatments
 
-ma_end_plot <- ggplot(tvor_30, aes(x=ttend, y=mass.end, group=interaction(treatment, end.class), color=treatment))
-ma_end_plot + geom_point(aes(shape=end.class)
-) + geom_smooth(method="lm"
-) + facet_wrap(~temp.var)
+ma_end_plot <- ggplot(tvor_30, aes(x=ttend, y=mass.end, group=interaction(treatment, temp.var)))
+ma_end_plot + geom_point(aes(shape=treatment),
+                         size=5, alpha=.7
+) + geom_smooth(aes(color=temp.var, linetype=treatment),
+                method="lm", se=FALSE, size=3
+) + scale_color_manual(values=c("#56B4E9", "#D55E00"), name=c("Fluctuation [C]"),
+                      breaks=c("0", "10"), labels=c("0", "10"),
+                      guide=guide_legend(keywidth = 3)
+) + scale_linetype_manual(values=c("solid", "dashed"), name="Treatment",
+                          breaks=c("control", "para"), labels=c("NP","P"),
+                          guide=guide_legend(keywidth = 4)
+) + scale_shape_manual(values = c(16,17),name="Treatment",
+                       breaks=c("control", "para"), labels=c("NP", "P"),
+                       guide=guide_legend(keywidth = 2.5)
+) + labs(x="Age [Days]", y="Mass [mg]"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16))
+
+
 
 
 
@@ -1071,7 +1099,7 @@ pml_gammod_fit+geom_point(size=3, shape=1
 
 
 
-#Model with age and load in same smooth
+#Model with age and load in separate smooths
 #make columns with predicted and residual values for plotting
 p_mass$pred_ni<-predict(gam_pml_nointmod, level=0)
 p_mass$resid_ni<-residuals(gam_pml_nointmod, level=0)
