@@ -412,7 +412,7 @@ ma_end_plot + geom_point(aes(shape=treatment),
 
 #Color by mean temperature, facet by fluctuations
 numem_ld_plot <- ggplot(tvor_p, aes(x=load, y=num.em, color=temp.avg))
-numem_ld_plot + geom_point(size=6, alpha=.8
+numem_ld_plot <- numem_ld_plot + geom_point(size=6, alpha=.8
 ) + geom_smooth(method="lm", se=FALSE, size=2
 ) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
                        breaks=c("25","28","30"),labels=c("25","28","30"),
@@ -434,18 +434,18 @@ numem_ld_plot + geom_point(size=6, alpha=.8
           legend.background = element_rect(color="black",linetype="solid"),
           legend.text = element_text(size=16),
           legend.title = element_text(size=16),
-          legend.position = c(.9, .2))
+          legend.position = "none")
 
-
+numem_ld_plot
 
 
 #LOAD EFFECTS ON SURVIVAL TO ECLOSION (NUMBER ECLOSED)
 
 #Color by mean temperature, facet by fluctuations
 numecl_ld_plot <- ggplot(tvor_p, aes(x=load, y=num.ecl, color=temp.avg))
-numecl_ld_plot + geom_point(size=6, alpha=.8
+numecl_ld_plot <- numecl_ld_plot + geom_point(size=6, alpha=.8
 ) + geom_smooth(method="lm", se=FALSE, size=2
-) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Mean Temp. [C]"),
                        breaks=c("25","28","30"),labels=c("25","28","30"),
                        guide=guide_legend(keywidth=3)       
 ) + facet_wrap(~temp.var
@@ -465,7 +465,15 @@ numecl_ld_plot + geom_point(size=6, alpha=.8
           legend.background = element_rect(color="black",linetype="solid"),
           legend.text = element_text(size=16),
           legend.title = element_text(size=16),
-          legend.position = c(.9, .2))
+          legend.position = c(.89, .3))
+
+
+numecl_ld_plot
+
+#combine into one figure using cowplot
+
+surv_ld_fig <- plot_grid(numem_ld_plot, numecl_ld_plot, align = "h")
+surv_ld_fig
 
 
 
