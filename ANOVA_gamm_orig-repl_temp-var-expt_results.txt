@@ -51,4 +51,46 @@ s(bug.id) 	    329.476 391.000    5.087  <2e-16
 
 
 
+Formula:
+log_mss ~ s(age, by = interaction(treatment, temp.avg, temp.var, 
+    k = 20, bs = "ts")) + s(bug.id, bs = "re") + 
+    treatment * temp.avg * temp.var
 
+Parametric coefficients:
+                                    Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                          6.51261    0.07484  87.019  < 2e-16 ***
+treatmentpara                       -0.96029    0.10516  -9.132  < 2e-16 ***
+temp.avg28                          -0.11449    0.13468  -0.850  0.39546    
+temp.avg30                           1.16219    0.18319   6.344 3.19e-10 ***
+temp.var10                          -0.34234    0.10534  -3.250  0.00119 ** 
+treatmentpara:temp.avg28             0.56948    0.18720   3.042  0.00240 ** 
+treatmentpara:temp.avg30            -0.22911    0.25409  -0.902  0.36741    
+treatmentpara:temp.var10             0.24615    0.14677   1.677  0.09377 .  
+temp.avg28:temp.var10                0.06349    0.17450   0.364  0.71603    
+temp.avg30:temp.var10               -0.47872    0.20886  -2.292  0.02208 *  
+treatmentpara:temp.avg28:temp.var10 -0.49892    0.24439  -2.041  0.04143 *  
+treatmentpara:temp.avg30:temp.var10  0.32700    0.29758   1.099  0.27206    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Approximate significance of smooth terms:
+                                                                                            edf  Ref.df        F p-value    
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.25.0.20.ts    2.890   3.454 1518.196  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.25.0.20.ts       3.828   4.479  538.903  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.28.0.20.ts    3.934   4.447  946.121  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.28.0.20.ts       2.887   3.402  471.377  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.30.0.20.ts    3.548   3.936 1827.248  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.30.0.20.ts       3.956   4.339  914.981  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.25.10.20.ts   4.243   4.996  964.616  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.25.10.20.ts      3.760   4.399  753.603  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.28.10.20.ts   4.441   5.319  536.447  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.28.10.20.ts      3.571   4.274  444.777  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")control.30.10.20.ts   5.026   5.625 1063.135  <2e-16 ***
+s(age):interaction(treatment, temp.avg, temp.var, k = 20, bs = "ts")para.30.10.20.ts      5.449   6.354  461.935  <2e-16 ***
+s(bug.id)                                                                               329.476 391.000    5.087  <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+R-sq.(adj) =  0.969   Deviance explained = 97.7%
+-ML = 900.68  Scale est. = 0.10259   n = 1565
+> 
