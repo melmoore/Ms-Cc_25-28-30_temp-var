@@ -1404,5 +1404,44 @@ massend_sum
 
 
 
+#-----------------------
+
+#attempt to analyze wasp survival by dropping the 30.10 treatment
+
+#create combo column with temp.avg and temp.var
+tvor_p <- unite(tvor_p, "tatv", temp.avg, temp.var, remove = FALSE)
+
+tvor_nw <- subset(tvor_p, tatv!="30_10")
+
+#make temp var a character instead of factor
+tvor_nw$temp.var <- as.character(tvor_nw$temp.var)
+
+
+#run a glm model without the 30.10 group--overdispersed, so adding a random effect of individual
+ws_nowowe_mod1 <- glm(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * load,
+                      family=quasibinomial,
+                      data=tvor_nw,
+                      na.action=na.omit)
+
+
+anova(ws_nowowe_mod1)
+summary(ws_nowowe_mod1)
+
+
+#rescaling load
+tvor_nw$resc_ld <- rescale(tvor_nw$load, to=c(0,1))
+
+
+#run a glmer model, no 30.10 group, bug.id as random effect
+ws_nowowe_re_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                      family=binomial,
+                      data=tvor_nw,
+                      na.action=na.omit,
+                      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(ws_nowowe_re_mod1)
+summary(ws_nowowe_re_mod1)
+
+
 
 
