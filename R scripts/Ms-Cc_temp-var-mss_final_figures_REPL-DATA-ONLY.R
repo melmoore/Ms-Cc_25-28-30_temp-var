@@ -116,7 +116,7 @@ lmass_sum$age_se <- age_sum[, 8]
 
 mn_lma_plot <- ggplot(lmass_sum, aes(x=age, y=log_mss, group=interaction(temp.var, treatment), color=temp.var))
 mn_lma_plot + geom_point(aes(shape=treatment),
-                         size=6
+                         size=6, stroke=2
 ) + geom_line(aes(linetype=treatment),
               size=2
 ) + geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
@@ -125,13 +125,13 @@ mn_lma_plot + geom_point(aes(shape=treatment),
                    height=.4, size=1.2
 ) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
                      breaks=c("0","10"),labels=c("0","10"),
-                     guide=guide_legend(keywidth = 3)
+                     guide=guide_legend(keywidth = 6, keyheight = 1.5)
 ) + scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
                         breaks=c("control","para"),labels=c("NP","P"),
-                        guide=guide_legend(keywidth = 4)
-) + scale_shape_manual(values = c(16,17),name="Treatment",
+                        guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_shape_manual(values = c(16,2),name="Treatment",
                      breaks=c("control","para"),labels=c("NP","P"),
-                     guide=guide_legend(keywidth = 4)
+                     guide=guide_legend(keywidth = 6, keyheight = 1.5)
 ) + labs(x="Age [days]",y="Log(Mass) [mg]"
 ) + facet_wrap(~temp.avg
 ) + theme(text = element_text(family=("Cambria")),
@@ -181,13 +181,13 @@ psem_sum$temp.avg <- ifelse(psem_sum$temp.avg==1, 25,
 #color by fluctuation. Error bars = SE
 #saved as individual object for combining with prop ecl for full figure
 mn_psem_plot <- ggplot(psem_sum, aes(x=temp.avg, y=ps.em, color=temp.var))
-mn_psem_plot <- mn_psem_plot + geom_point(size=6, shape=17
+mn_psem_plot <- mn_psem_plot + geom_point(size=6, shape=2, stroke=2
 ) + geom_line(size = 2, linetype="dashed"
 ) + geom_errorbar(aes(ymin = ps.em-se, ymax = ps.em+se),
                   width=.5, size=1.2
 ) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
                        breaks=c("0","10"),labels=c("0","10"),
-                       guide=guide_legend(keywidth = 2.5)
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
 ) + scale_x_continuous(limits=c(24.5,30.5),
                        breaks = c(25, 28, 30)
 ) + scale_y_continuous(limits = c(0, 0.9),
@@ -227,13 +227,13 @@ psecl_sum$temp.avg <- ifelse(psecl_sum$temp.avg==1, 25,
 #color by fluctuation treatment
 #saved as separate object for combining with prop em for full figure
 mn_psecl_plot <- ggplot(psecl_sum, aes(x=temp.avg, y=ps.ecl, color=temp.var))
-mn_psecl_plot <- mn_psecl_plot + geom_point(size=6, shape=17
+mn_psecl_plot <- mn_psecl_plot + geom_point(size=6, shape=2, stroke=2
 ) + geom_line(size = 2, linetype="dashed"
 ) + geom_errorbar(aes(ymin = ps.ecl-se, ymax = ps.ecl+se),
                   width=.5, size=1.2
 ) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
                        breaks=c("0","10"),labels=c("0","10"),
-                       guide=guide_legend(keywidth = 4)
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
 ) + scale_x_continuous(limits=c(24.5,30.5),
                        breaks = c(25, 28, 30)
 ) + scale_y_continuous(limits = c(0, 0.9),
@@ -248,6 +248,8 @@ mn_psecl_plot <- mn_psecl_plot + geom_point(size=6, shape=17
           axis.title.x = element_text(size = 20),
           axis.title.y = element_text(size = 20),
           legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
           legend.position = c(.8, .85))
 
 mn_psecl_plot
@@ -279,7 +281,7 @@ ttemw_sum$temp.avg <- ifelse(ttemw_sum$temp.avg==1, 25,
 
 #Plotting development time to emergence with mean temperature on x axis, fluctuation as grouping variable
 mn_ttem_plot <- ggplot(ttemw_sum, aes(x=temp.avg, y=ttem.w, color=temp.var))
-mn_ttem_plot <- mn_ttem_plot + geom_point(size=6, shape=17
+mn_ttem_plot <- mn_ttem_plot + geom_point(size=6, shape=2, stroke=2
 ) + geom_line(size=2, linetype="dashed"
 ) + geom_errorbar(aes(ymin=ttem.w - se, ymax=ttem.w + se),
                 width=.5, size=1.2
@@ -321,13 +323,13 @@ ttecl_sum$temp.avg <- ifelse(ttecl_sum$temp.avg==1, 25,
 
 #Plotting development time to eclosion with mean temperature on x axis, fluctuation as grouping variable
 mn_ttecl_plot <- ggplot(ttecl_sum, aes(x=temp.avg, y=ttecl, color=temp.var))
-mn_ttecl_plot <- mn_ttecl_plot + geom_point(size=6, shape=17
+mn_ttecl_plot <- mn_ttecl_plot + geom_point(size=6, shape=2, stroke=2
 ) + geom_line(size=2, linetype="dashed"
 ) + geom_errorbar(aes(ymin=ttecl - se, ymax=ttecl + se),
                   width=.5, size=1.2
 ) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
                        breaks=c("0","10"),labels=c("0","10"),
-                       guide=guide_legend(keywidth = 4)
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
 ) + scale_x_continuous(limits=c(24.5,30.5),
                        breaks = c(25, 28, 30)
 ) + scale_y_continuous(limits = c(10, 24),
@@ -343,8 +345,8 @@ mn_ttecl_plot <- mn_ttecl_plot + geom_point(size=6, shape=17
           axis.title.x = element_text(size = 20),
           axis.title.y = element_text(size = 20),
           legend.background = element_rect(color="black",linetype="solid"),
-          legend.text = element_text(size=15),
-          legend.title = element_text(size=18),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
           legend.position = c(0.85, 0.15))
 
 mn_ttecl_plot
@@ -368,20 +370,20 @@ tvor_30 <- subset(tvor, temp.avg==30)
 #Plot mass at end of development (wandering, emergence or culled) against age at end of development
 #Color by fluctuation, linetype and shape of points by treatment
 ma_end_plot <- ggplot(tvor_30, aes(x=ttend, y=mass.end, group=interaction(treatment, temp.var)))
-ma_end_plot + geom_point(aes(shape=treatment),
-                         size=5, alpha=.7
+ma_end_plot + geom_point(aes(shape=treatment, color=temp.var),
+                         size=5, alpha=.7, stroke=2
 ) + geom_smooth(aes(color=temp.var, linetype=treatment),
                 method="lm", se=FALSE, size=3
-) + scale_color_manual(values=c("#56B4E9", "#D55E00"), name=c("Fluctuation [C]"),
-                       breaks=c("0", "10"), labels=c("0", "10"),
-                       guide=guide_legend(keywidth = 3)
 ) + scale_linetype_manual(values=c("solid", "dashed"), name="Treatment",
                           breaks=c("control", "para"), labels=c("NP","P"),
-                          guide=guide_legend(keywidth = 4)
-) + scale_shape_manual(values = c(16,17),name="Treatment",
+                          guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_shape_manual(values = c(16,2),name="Treatment",
                        breaks=c("control", "para"), labels=c("NP", "P"),
-                       guide=guide_legend(keywidth = 2.5)
-) + labs(x="Age [Days]", y="Mass [mg]"
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_color_manual(values=c("#56B4E9", "#D55E00"), name=c("Fluctuation [C]"),
+                       breaks=c("0", "10"), labels=c("0", "10"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + labs(x="Final Age [Days]", y="Final Mass [mg]"
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
                                           size = 1),
