@@ -304,3 +304,111 @@ pmlni_gammod_fit+geom_point(size=4, shape=1
           legend.title = element_text(size=16),
           legend.position = c(0.95, 0.8))
 
+
+
+#--------------------
+
+#ANALYSES OF WASP SURVIVAL TO EMERGENCE AND ECLOSION
+
+#Remove the 30+/-10 treatment, as no wasps survived, the mechanism is not the same as the other treatments
+
+#create combo column with temp.avg and temp.var
+tvor_p <- unite(tvor_p, "tatv", temp.avg, temp.var, remove = FALSE)
+
+tvor_nw <- subset(tvor_p, tatv!="30_10")
+
+#make temp var a character instead of factor
+tvor_nw$temp.var <- as.character(tvor_nw$temp.var)
+
+
+#rescale load 
+tvor_nw$resc_ld <- rescale(tvor_nw$load, to=c(0,1))
+
+
+#Full GLMER model, binomial distribution. Number survived (success) vs number died (failure) as response variable
+#Mean temperature, temperature fluctuation and rescaled load as fixed effects. Random intercept of individual
+ws_nowowe_re_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(ws_nowowe_re_mod1)
+summary(ws_nowowe_re_mod1)
+
+
+
+#determining significance of fixed effects
+
+ws_nowowe_re_mod_null <- glmer(cbind(num.ecl, tot.died) ~ 1 + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_ta <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tv <- glmer(cbind(num.ecl, tot.died) ~ temp.var + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_ld <- glmer(cbind(num.ecl, tot.died) ~ resc_ld + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tatv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tald <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:resc_ld + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_ldtv <- glmer(cbind(num.ecl, tot.died) ~ temp.var:resc_ld + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tatvld <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var:resc_ld + (1|bug.id),
+                                 family=binomial,
+                                 data=tvor_nw,
+                                 na.action=na.omit,
+                                 control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+anova(ws_nowowe_re_mod_null, ws_nowowe_re_mod1, ws_nowowe_re_mod_ta, ws_nowowe_re_mod_tv, ws_nowowe_re_mod_ld,
+      ws_nowowe_re_mod_tatv, ws_nowowe_re_mod_tald, ws_nowowe_re_mod_ldtv, ws_nowowe_re_mod_tatvld, test="Chisq")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
