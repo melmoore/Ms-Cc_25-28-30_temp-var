@@ -1,0 +1,47 @@
+> summary(ws_nowowe_re_mod1)
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc_ld + (1 |      bug.id)
+   Data: tvor_nw
+Control: glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e+05))
+
+     AIC      BIC   logLik deviance df.resid 
+  1340.7   1375.3   -659.3   1318.7      160 
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-1.90718 -0.17161  0.01684  0.15948  1.63907 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ bug.id (Intercept) 0.9249   0.9617  
+Number of obs: 171, groups:  bug.id, 171
+
+Fixed effects:
+                               Estimate Std. Error z value Pr(>|z|)    
+(Intercept)                   -0.004273   0.336161  -0.013   0.9899    
+temp.avg28                     0.079403   0.510795   0.155   0.8765    
+temp.avg30                     0.396891   0.501617   0.791   0.4288    
+temp.var10                    -0.214732   0.474802  -0.452   0.6511    
+resc_ld                        0.769903   0.826384   0.932   0.3515    
+temp.avg28:temp.var10         -4.294812   0.900352  -4.770 1.84e-06 ***
+temp.avg28:resc_ld            -1.383394   1.455038  -0.951   0.3417    
+temp.avg30:resc_ld            -2.260568   1.027880  -2.199   0.0279 *  
+temp.var10:resc_ld            -0.245678   1.204698  -0.204   0.8384    
+temp.avg28:temp.var10:resc_ld  3.068080   2.636504   1.164   0.2445    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) tmp.28 tmp.30 tmp.10 rsc_ld tm.28:.10 t.28:_ t.30:_ t.10:_
+temp.avg28  -0.659                                                           
+temp.avg30  -0.670  0.442                                                    
+temp.var10  -0.707  0.466  0.474                                             
+resc_ld     -0.866  0.571  0.581  0.613                                      
+tmp.v28:.10  0.377 -0.571 -0.253 -0.529 -0.326                               
+tmp.vg28:r_  0.492 -0.867 -0.330 -0.348 -0.568  0.494                        
+tmp.vg30:r_  0.697 -0.459 -0.869 -0.493 -0.804  0.263     0.457              
+tmp.vr10:r_  0.594 -0.391 -0.398 -0.869 -0.686  0.460     0.390  0.551       
+tm.28:.10:_ -0.274  0.480  0.184  0.398  0.316 -0.890    -0.554 -0.254 -0.458
+fit warnings:
+fixed-effect model matrix is rank deficient so dropping 2 columns / coefficients

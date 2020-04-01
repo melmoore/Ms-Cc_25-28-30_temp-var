@@ -1,0 +1,36 @@
+> summary(wtots_re_mod1)
+Generalized linear mixed model fit by maximum likelihood (Laplace Approximation) ['glmerMod']
+ Family: binomial  ( logit )
+Formula: cbind(num.ecl, tot.died) ~ temp.avg * resc.ld + (1 | bug.id)
+   Data: tvor_con
+
+     AIC      BIC   logLik deviance df.resid 
+   943.0    961.9   -464.5    929.0      102 
+
+Scaled residuals: 
+     Min       1Q   Median       3Q      Max 
+-1.85097 -0.13437  0.01768  0.14745  1.59253 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ bug.id (Intercept) 0.9981   0.9991  
+Number of obs: 109, groups:  bug.id, 109
+
+Fixed effects:
+                   Estimate Std. Error z value Pr(>|z|)  
+(Intercept)        -0.01302    0.34729  -0.037   0.9701  
+temp.avg28          0.09269    0.52770   0.176   0.8606  
+temp.avg30          0.40724    0.51900   0.785   0.4327  
+resc.ld             0.78840    0.85510   0.922   0.3565  
+temp.avg28:resc.ld -1.41406    1.50561  -0.939   0.3476  
+temp.avg30:resc.ld -2.28411    1.06430  -2.146   0.0319 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Correlation of Fixed Effects:
+            (Intr) tmp.28 tmp.30 rsc.ld t.28:.
+temp.avg28  -0.659                            
+temp.avg30  -0.669  0.441                     
+resc.ld     -0.865  0.570  0.579              
+tmp.vg28:r.  0.492 -0.866 -0.330 -0.569       
+tmp.vg30:r.  0.696 -0.459 -0.869 -0.804  0.457
