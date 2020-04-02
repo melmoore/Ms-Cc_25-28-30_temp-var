@@ -56,7 +56,7 @@ tvor_lng$keep_ld <- ifelse(tvor_lng$end.class=="em" & tvor_lng$load > 300, 0, 1)
 tvor <- subset(tvor, keep_ld==1)
 tvor_lng <- subset(tvor_lng, keep_ld==1)
 
-#remove wanderers and WOWEs that wandered
+#remove parasitized wanderers and WOWEs that wandered
 tvor$keep_p <- ifelse(tvor$treatment=="para" & tvor$end.class=="wand", 0, 1)
 tvor_lng$keep_p <- ifelse(tvor_lng$treatment=="para" & tvor_lng$end.class=="wand", 0, 1)
 
@@ -383,6 +383,8 @@ ma_end_plot + geom_point(aes(shape=treatment, color=temp.var),
 ) + scale_color_manual(values=c("#56B4E9", "#D55E00"), name=c("Fluctuation [C]"),
                        breaks=c("0", "10"), labels=c("0", "10"),
                        guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_y_continuous(limits = c(0, 20000), 
+                       breaks = c(0, 5000, 10000, 15000, 20000)
 ) + labs(x="Final Age [Days]", y="Final Mass [mg]"
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
