@@ -481,3 +481,54 @@ surv_ld_fig
 
 
 
+#---------------------
+
+#Plot final masses for each temperature and parasitization group
+
+#Find mean and variation in final mass for each treatment combination
+finmass_sum <- summarySE(tvor, measurevar = "mass.end",
+                         groupvars = c("temp.avg", "temp.var", "treatment"),
+                         na.rm = TRUE)
+finmass_sum
+
+
+#Plot mean final mass by temperature fluctuation, facetted by mean temperature. Color, linetype and 
+#point shape by treatment. Error bars = SE
+finmass_plot <- ggplot(finmass_sum, aes(x=temp.var, y=mass.end, group=interaction(temp.avg, treatment),
+                                        color=treatment)) 
+finmass_plot + geom_point(aes(shape=treatment),
+                          size=6, stroke=2
+) + geom_line(aes(linetype=treatment),
+              size=2
+) + geom_errorbar(aes(ymin = mass.end-se, ymax = mass.end+se),
+                  width=.5, size=1.2
+) + scale_color_manual(values=c("black", "#999999"), name=c("Treatment"),
+                       breaks=c("control", "para"), labels=c("NP", "P"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
+                          breaks=c("control","para"),labels=c("NP","P"),
+                          guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_shape_manual(values = c(16,2),name="Treatment",
+                       breaks=c("control","para"),labels=c("NP","P"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + labs(x="Fluctuation [+/-C]",y="Mass [mg]"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .1))
+
+
+
