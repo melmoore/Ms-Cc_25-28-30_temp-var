@@ -374,6 +374,18 @@ mn_lma_plot + geom_point(aes(shape=expt), size=5
 )+facet_wrap(temp.var~treatment)
 
 
+mn_lmss_sum_con <- subset(mn_lmss_sum, treatment=="control")
+
+mn_lma_plot2 <- ggplot(mn_lmss_sum_con, aes(x=age, y=log_mss, group=temp.var, color=temp.var))
+mn_lma_plot2 + geom_point(aes(shape=expt), size=5
+)+geom_line(size=1.2
+)+geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
+                width=.5, size=1
+)+geom_errorbarh(aes(xmin=age - age_se, xmax=age + age_se),
+                 height=.5, size=1
+)+facet_wrap(~expt)
+
+
 
 #plot mean mass by age--color by treatment, facet wrap by temp.var and expt
 mn_lma_plot2 <- ggplot(mn_lmss_sum, aes(x=age, y=log_mss, group=treatment, color=treatment))
@@ -930,6 +942,26 @@ suppl_load_fig<-plot_grid(mn_lmald25_plot, mn_lmald28_plot, mn_lmald30_plot)
 suppl_load_fig
 
 
+#--------------------
+
+#plot mean host mass by age, color by load, facet by load bin, so I can compare between mean and temp fluc 
+#treatments
+
+mn_mald_fl_plot <- ggplot(massbin.sum, aes(x=age, y=log_mss, group=interaction(temp.avg, temp.var),
+                                             color=temp.avg))
+mn_mald_fl_plot + geom_point(size=6
+) + geom_line(aes(linetype=temp.var),
+              size=2
+) + geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
+                  width=.5, size=1.2
+) + geom_errorbarh(aes(xmin = age-age_se, xmax = age+age_se),
+                   height=.2, size=1.2
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + facet_wrap(~bin)
+
+
 #-------------------
 
 #run a prelim gamm model of host mass and age by temp avg, temp var and treatment
@@ -1441,6 +1473,186 @@ ws_nowowe_re_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc
 
 anova(ws_nowowe_re_mod1)
 summary(ws_nowowe_re_mod1)
+
+
+#---------------------------
+
+#Plot final masses for each temperature and parasitization group
+
+#find mean and variation in final mass for each treatment combo
+finmass_sum <- summarySE(tvor, measurevar = "mass.end",
+                         groupvars = c("temp.avg", "temp.var", "treatment"),
+                         na.rm = TRUE)
+finmass_sum
+
+
+#plot final mass
+finmass_plot <- ggplot(finmass_sum, aes(x=temp.var, y=mass.end, group=interaction(temp.avg, treatment),
+                                        color=treatment)) 
+finmass_plot + geom_point(aes(shape=treatment),
+                          size=6, stroke=2
+) + geom_line(aes(linetype=treatment),
+              size=2
+) + geom_errorbar(aes(ymin = mass.end-se, ymax = mass.end+se),
+                  width=.5, size=1.2
+) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                       breaks=c("0","10"),labels=c("0","10"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
+                          breaks=c("control","para"),labels=c("NP","P"),
+                          guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_shape_manual(values = c(16,2),name="Treatment",
+                       breaks=c("control","para"),labels=c("NP","P"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + labs(x="Fluctuation [+/-C]",y="Mass [mg]"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .1))
+
+
+
+
+#-------------------
+
+#Analysis of final mass by temp.avg, temp.var and treatment
+
+#convert to log mass end
+tvor$log_mssend <- log(tvor$mass.end)
+
+finmass_mod <- lme(log_mssend ~ temp.avg * temp.var * treatment,
+                   random = ~ 1|bug.id,
+                   data = tvor,
+                   method = "ML",
+                   na.action = na.omit)
+anova(finmass_mod)
+summary(finmass_mod)
+
+
+#------------------------
+
+#Analysis of final mass for parasitized caterpillars by mean temperature, fluctuation and load
+
+#Convert final mass to log scale for parasitized caterpillars
+tvor_p$log_mssend <- log(tvor_p$mass.end)
+
+
+#Remove 30.10 treatment, as they have no load and it therefor cannot affect final mass
+tvor_p_nw <- subset(tvor_p, end.class!="cull")
+
+#Convert fluctuation to character, instead of factor
+tvor_p_nw$temp.var <- as.character(tvor_p_nw$temp.var)
+
+
+#Linear model, with log of final mass as response, mean temperature, fluctuation, load,
+#and their interactions as fixed effects. 
+finmass_p_mod <- lm(log_mssend ~ temp.avg * temp.var * load,
+                    data = tvor_p_nw,
+                    na.action = na.omit)
+
+anova(finmass_p_mod)
+summary(finmass_p_mod)
+
+
+
+#plotting final mass by load
+finmass_ld_plot <- ggplot(tvor_p_nw, aes(x=load, y=mass.end, color=temp.var))
+finmass_ld_plot + geom_point(size=5
+) + geom_smooth(method="lm", size=1.2
+) + facet_wrap(~temp.avg)
+
+
+
+
+#plot mean final mass for each load bin
+
+#Making a column "bin" that puts hosts into bins determined by load, binned by 50 
+tvor_p_nw$bin<-ifelse(tvor_p_nw$load<=50 & tvor_p_nw$load!=0, 50,
+                      ifelse(tvor_p_nw$load>50 & tvor_p_nw$load<=100, 100,
+                             ifelse(tvor_p_nw$load>100 & tvor_p_nw$load<=150, 150,
+                                    ifelse(tvor_p_nw$load>150 & tvor_p_nw$load<=200, 200,
+                                           ifelse(tvor_p_nw$load>200 & tvor_p_nw$load<=268, 250, 0)))))
+
+
+
+#find the mean final mass for each temp avg, temp var, and load bin
+finmass_ldbin_sum <- summarySE(tvor_p_nw, measurevar = "mass.end",
+                               groupvars = c("temp.avg", "temp.var", "bin"),
+                               na.rm = TRUE)
+finmass_ldbin_sum
+
+
+
+#plot the mean final mass for parasitized hosts by load bin
+finmass_ldbin_plot <- ggplot(finmass_ldbin_sum, aes(x=bin, y=mass.end,
+                                                    group=temp.var, color=temp.var))
+                             
+finmass_ldbin_plot + geom_point(size=6
+) + geom_line(size=2
+) + geom_errorbar(aes(ymin = mass.end-se, ymax = mass.end+se),
+                  width=5, size=1.2
+) + facet_wrap(~temp.avg)
+
+
+
+#--------------------------------------
+
+#linear model of wasp development time
+
+#drop 30.10 group, since different mechanism in action, no wasps survive to have a development time
+
+#create combo column with temp.avg and temp.var
+tvor_p <- unite(tvor_p, "tatv", temp.avg, temp.var, remove = FALSE)
+
+tvor_nw <- subset(tvor_p, tatv!="30_10")
+
+#make temp var a character instead of factor
+tvor_nw$temp.var <- as.character(tvor_nw$temp.var)
+
+
+#linear model of development time to emergence
+ttem_mod <- lm(ttem.w ~ temp.avg * temp.var * load,
+                  data=tvor_nw,
+                  na.action=na.omit)
+
+anova(ttem_mod)
+summary(ttem_mod)
+
+
+#add predicted and residual values to data frame to plot model outputs
+tvor_nw$pred <- predict(ttem_mod)
+tvor_nw$resid <- residuals(ttem_mod)
+
+
+#plot residuals against fitted values
+ttem_rf_plot <- ggplot(tvor_nw, aes(x=pred, y=resid, color=temp.var))
+ttem_rf_plot + geom_point(shape=1
+) + facet_wrap(~temp.avg)
+
+
+#make temp.avg a character
+tvor_nw$temp.avg <- as.character(tvor_nw$temp.avg)
+
+
+
+
+
+
+
+
 
 
 
