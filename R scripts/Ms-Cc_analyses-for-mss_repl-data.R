@@ -403,10 +403,49 @@ anova(ws_nowowe_re_mod_null, ws_nowowe_re_mod1, ws_nowowe_re_mod_ta, ws_nowowe_r
 
 
 
+#----------------------
+
+#Analysis of final mass by mean temperature, fluctuation and parasitization treatment
+
+#convert final mass to log scale
+tvor$log_mssend <- log(tvor$mass.end)
+
+#Linear mixed effects model, with log of final mass as response, mean temperature, fluctuation, parasitization
+#treatment and their interactions as fixed effects. Individual included as a random slope. 
+finmass_mod <- lme(log_mssend ~ temp.avg * temp.var * treatment,
+                   random = ~ 1|bug.id,
+                   data = tvor,
+                   method = "ML",
+                   na.action = na.omit)
+
+anova(finmass_mod)
+summary(finmass_mod)
 
 
 
+#---------------------------
 
+#Analysis of final mass for parasitized caterpillars by mean temperature, fluctuation and load
+
+#Convert final mass to log scale for parasitized caterpillars
+tvor_p$log_mssend <- log(tvor_p$mass.end)
+
+
+#Remove 30.10 treatment, as they have no load and it therefor cannot affect final mass
+tvor_p_nw <- subset(tvor_p, end.class!="cull")
+
+#Convert fluctuation to character, instead of factor
+tvor_p_nw$temp.var <- as.character(tvor_p_nw$temp.var)
+
+
+#Linear model, with log of final mass as response, mean temperature, fluctuation, load,
+#and their interactions as fixed effects. 
+finmass_p_mod <- lm(log_mssend ~ temp.avg * temp.var * load,
+                   data = tvor_p_nw,
+                   na.action = na.omit)
+
+anova(finmass_p_mod)
+summary(finmass_p_mod)
 
 
 
