@@ -16,7 +16,7 @@ library(mgcv)
 library(dplyr)
 library(ggplot2)
 library(extrafont)
-
+library(MuMIn)
 
 
 #load data
@@ -338,6 +338,8 @@ summary(ws_nowowe_re_mod1)
 
 
 
+
+
 #determining significance of fixed effects
 
 ws_nowowe_re_mod_null <- glmer(cbind(num.ecl, tot.died) ~ 1 + (1|bug.id),
@@ -396,9 +398,150 @@ ws_nowowe_re_mod_tatvld <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var:re
                                  control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-anova(ws_nowowe_re_mod_null, ws_nowowe_re_mod1, ws_nowowe_re_mod_ta, ws_nowowe_re_mod_tv, ws_nowowe_re_mod_ld,
-      ws_nowowe_re_mod_tatv, ws_nowowe_re_mod_tald, ws_nowowe_re_mod_ldtv, ws_nowowe_re_mod_tatvld, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_ta, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tv, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_ld, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tatv, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tald, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_ldtv, test="Chisq")
+anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tatvld, test="Chisq")
 
+
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wsmod <- tvor_nw %>% select(bug.id, temp.avg, temp.var, resc_ld, num.ecl, tot.died)
+tvor_wsmod <- drop_na(tvor_wsmod)
+
+#model with data frame with no NAs, na.action set to na.fail
+ws_nowowe_re_mod <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                          family=binomial,
+                          data=tvor_wsmod,
+                          na.action=na.fail,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsmod_dredge <- dredge(ws_nowowe_re_mod)
+wsmod_dredge
+
+#best model is one without the interaction between tv and load, and without 3 way interaction
+
+
+#----------------------
+
+#Analysis of wasp survival to emergence--should I keep individuals in 30.10 that had emergence?
+#if so, it is a different data set than survival to eclosion. Or just remove 30.10 group entirely?
+
+
+
+
+#-----------------------
+
+#Analysis of wasp development time
+
+#Use the dataset without 30.10 treatment group
+
+#Linear model of development time to emergence from the host; time from oviposition to emergence (in days)
+#as response variable, mean temperature (factor), fluctuation (character) and load (numeric) as fixed effects.  
+wdev_em_mod1 <- lm(ttem.w ~ temp.avg * temp.var * load,
+                    data = tvor_nw,
+                    na.action = na.omit)
+
+anova(wdev_em_mod1)
+
+
+#comparing to reduced model
+wdev_em_mod2 <- lm(ttem.w ~ temp.avg * temp.var + temp.avg:load,
+                   data = tvor_nw,
+                   na.action = na.omit)
+
+
+
+anova(wdev_em_mod1, wdev_em_mod2)
+AIC(wdev_em_mod1, wdev_em_mod2) #reduced slightly better, ask Joel
+
+
+#looking at model fit
+dt_em <- tvor_nw
+
+#adding predicted and residual values
+dt_em$pred <- predict(wdev_em_mod1)
+dt_em$resid <- residuals(wdev_em_mod1)
+
+
+#plot predicted values against residuals
+wdtem_rf_plot <- ggplot(dt_em, aes(x=pred, y=resid, group=temp.avg, color=temp.avg))
+wdtem_rf_plot + geom_point(shape=1, size=5
+) + geom_hline(aes(yintercept=0), color="black", linetype="dashed", size=2
+) + facet_wrap(~temp.var)
+
+
+#plot residual values against load
+wdtem_rld_plot <- ggplot(dt_em, aes(x=load, y=resid, group=temp.avg, color=temp.avg))
+wdtem_rld_plot + geom_point(shape=1, size=5
+) + geom_hline(aes(yintercept=0), color="black", linetype="dashed", size=2
+) + facet_wrap(~temp.var)
+
+
+#plot fitted values against raw data
+wdtem_fld_plot <- ggplot(dt_em, aes(x=load, y=ttem.w, group=temp.avg, color=temp.avg))
+wdtem_fld_plot + geom_point(shape=1, size=5
+) + geom_line(aes(y=pred, group=temp.avg, color=temp.avg),
+              size=2
+) + facet_wrap(~temp.var)
+
+
+
+
+#Linear model of development time to eclosion from the host; time from oviposition to eclosion (in days)
+#as response variable, mean temperature (factor), fluctuation (character) and load (numeric) as fixed effects.  
+wdev_ecl_mod1 <- lm(ttecl ~ temp.avg * temp.var * load,
+                   data = tvor_nw,
+                   na.action = na.omit)
+
+anova(wdev_ecl_mod1)
+
+
+#reduced model
+wdev_ecl_mod2 <- lm(ttecl ~ temp.avg * temp.var + load,
+                    data = tvor_nw,
+                    na.action = na.omit)
+
+
+anova(wdev_ecl_mod1, wdev_ecl_mod2)
+AIC(wdev_ecl_mod1, wdev_ecl_mod2)  #again, reduced is slightly better, but not by much
+
+
+
+#looking at model fit
+dt_ecl <- drop_na(tvor_nw, ttecl)
+
+#adding predicted and residual values
+dt_ecl$pred <- predict(wdev_ecl_mod1)
+dt_ecl$resid <- residuals(wdev_ecl_mod1)
+
+
+#plot predicted values against residuals
+wdtecl_rf_plot <- ggplot(dt_ecl, aes(x=pred, y=resid, group=temp.avg, color=temp.avg))
+wdtecl_rf_plot + geom_point(shape=1, size=5
+) + geom_hline(aes(yintercept=0), color="black", linetype="dashed", size=2
+) + facet_wrap(~temp.var)
+
+
+#plot residual values against load
+wdtecl_rld_plot <- ggplot(dt_ecl, aes(x=load, y=resid, group=temp.avg, color=temp.avg))
+wdtecl_rld_plot + geom_point(shape=1, size=5
+) + geom_hline(aes(yintercept=0), color="black", linetype="dashed", size=2
+) + facet_wrap(~temp.var)
+
+
+
+#plot fitted values against raw data
+wdtecl_fld_plot <- ggplot(dt_ecl, aes(x=load, y=ttecl, group=temp.avg, color=temp.avg))
+wdtecl_fld_plot + geom_point(shape=1, size=5
+) + geom_line(aes(y=pred, group=temp.avg, color=temp.avg),
+              size=2
+) + facet_wrap(~temp.var)
 
 
 
