@@ -325,7 +325,7 @@ tvor_nw$temp.var <- as.character(tvor_nw$temp.var)
 tvor_nw$resc_ld <- rescale(tvor_nw$load, to=c(0,1))
 
 
-#Full GLMER model, binomial distribution. Number survived (success) vs number died (failure) as response variable
+#Full GLMER model, binomial distribution. Number survived to eclosion (success) vs number died (failure) as response variable
 #Mean temperature, temperature fluctuation and rescaled load as fixed effects. Random intercept of individual
 ws_nowowe_re_mod1 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
                            family=binomial,
@@ -427,12 +427,110 @@ wsmod_dredge
 #best model is one without the interaction between tv and load, and without 3 way interaction
 
 
+#reduced model from dredge:
+ws_nowowe_re_mod_rd <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var +
+                           temp.avg:resc_ld + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(ws_nowowe_re_mod_rd)
+
+
+#comparing fixed effects to reduced model
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ta, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tv, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ld, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tatv, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tald, test="Chisq")
+
+
 #----------------------
 
-#Analysis of wasp survival to emergence--should I keep individuals in 30.10 that had emergence?
-#if so, it is a different data set than survival to eclosion. Or just remove 30.10 group entirely?
+#Analysis of wasp survival to emergence--individuals from 30.10 treatment removed
+
+#Full GLMER model, binomial distribution. Number survived to emergence (success) vs number died (failure) as response variable
+#Mean temperature, temperature fluctuation and rescaled load as fixed effects. Random intercept of individual
+wsem_nw_re_mod1 <- glmer(cbind(num.em, num.unem) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(wsem_nw_re_mod1)
+summary(wsem_nw_re_mod1)
 
 
+
+#model selection using dredge()
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wsem <- tvor_nw %>% select(bug.id, temp.avg, temp.var, resc_ld, num.em, num.unem)
+tvor_wsem <- drop_na(tvor_wsem)
+
+
+#model with dataset without NAs, na.action set to na.fail
+wsem_nw_re_mod <- glmer(cbind(num.em, num.unem) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                         family=binomial,
+                         data=tvor_wsem,
+                         na.action=na.fail,
+                         control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsem_dredge <- dredge(wsem_nw_re_mod)
+wsem_dredge
+
+
+#reduced model from dredge
+wsem_nw_mod_rd <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                        + (1|bug.id),
+                         family=binomial,
+                         data=tvor_nw,
+                         na.action=na.omit,
+                         control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(wsem_nw_mod_rd)
+summary(wsem_nw_mod_rd)
+
+
+#determining significance of fixed effects
+wsem_nw_re_mod_ta <- glmer(cbind(num.em, num.unem) ~ temp.avg + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+wsem_nw_re_mod_tv <- glmer(cbind(num.em, num.unem) ~ temp.var + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsem_nw_re_mod_ld <- glmer(cbind(num.em, num.unem) ~ resc_ld + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+wsem_nw_re_mod_tatv <- glmer(cbind(num.em, num.unem) ~ temp.avg:temp.var + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+#comparing fixed effects individually to reduced model
+anova(wsem_nw_mod_rd, wsem_nw_re_mod_ta, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_re_mod_tv, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_re_mod_ld, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_re_mod_tatv, test="Chisq")
 
 
 #-----------------------
@@ -450,15 +548,32 @@ wdev_em_mod1 <- lm(ttem.w ~ temp.avg * temp.var * load,
 anova(wdev_em_mod1)
 
 
-#comparing to reduced model
-wdev_em_mod2 <- lm(ttem.w ~ temp.avg * temp.var + temp.avg:load,
+
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wdevem_mod <- tvor_nw %>% select(bug.id, temp.avg, temp.var, load, ttem.w)
+tvor_wdevem_mod <- drop_na(tvor_wdevem_mod)
+
+#model with data frame with no NAs, na.action set to na.fail
+wdev_em_mod <- lm(ttem.w ~ temp.avg * temp.var * load,
+                   data = tvor_wdevem_mod,
+                   na.action = na.fail)
+
+#dredged models
+wdev_em_dredge <- dredge(wdev_em_mod)
+wdev_em_dredge
+
+
+
+#Reduced model from dredge
+wdev_em_mod2 <- lm(ttem.w ~ temp.avg + temp.var + load + temp.avg:temp.var + temp.avg:load,
                    data = tvor_nw,
                    na.action = na.omit)
 
+anova(wdev_em_mod2)
 
 
-anova(wdev_em_mod1, wdev_em_mod2)
-AIC(wdev_em_mod1, wdev_em_mod2) #reduced slightly better, ask Joel
 
 
 #looking at model fit
@@ -502,14 +617,27 @@ wdev_ecl_mod1 <- lm(ttecl ~ temp.avg * temp.var * load,
 anova(wdev_ecl_mod1)
 
 
-#reduced model
-wdev_ecl_mod2 <- lm(ttecl ~ temp.avg * temp.var + load,
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wdevecl_mod <- tvor_nw %>% select(bug.id, temp.avg, temp.var, load, ttecl)
+tvor_wdevecl_mod <- drop_na(tvor_wdevecl_mod)
+
+#model with data frame with no NAs, na.action set to na.fail
+wdev_ecl_mod <- lm(ttecl ~ temp.avg * temp.var * load,
+                  data = tvor_wdevecl_mod,
+                  na.action = na.fail)
+
+
+wdev_ecl_dredge <- dredge(wdev_ecl_mod)
+wdev_ecl_dredge
+
+
+#reduced model from dredge:
+wdev_ecl_mod2 <- lm(ttecl ~ temp.avg + temp.var + load + temp.avg:temp.var,
                     data = tvor_nw,
                     na.action = na.omit)
 
 
-anova(wdev_ecl_mod1, wdev_ecl_mod2)
-AIC(wdev_ecl_mod1, wdev_ecl_mod2)  #again, reduced is slightly better, but not by much
+anova(wdev_ecl_mod2)
 
 
 
