@@ -438,6 +438,38 @@ ws_nowowe_re_mod_rd <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + re
 anova(ws_nowowe_re_mod_rd)
 
 
+
+#models without fixed effects of interest
+
+ws_nowowe_re_mod_noload <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + temp.avg:temp.var +
+                               temp.avg:resc_ld + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+ws_nowowe_re_mod_nota <- glmer(cbind(num.ecl, tot.died) ~ temp.var + resc_ld + temp.avg:temp.var +
+                                 temp.avg:resc_ld + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_notv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + resc_ld + temp.avg:temp.var +
+                                 temp.avg:resc_ld + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_noload, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_nota, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_notv, test="Chisq")
+
 #comparing fixed effects to reduced model
 anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ta, test="Chisq")
 anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tv, test="Chisq")
