@@ -14,6 +14,8 @@ library(cowplot)
 library(viridis)
 library(extrafont)
 library(lme4)
+library(MuMIn)
+library(mgcv)
 
 
 #load data
@@ -85,8 +87,7 @@ tvor$keep_p2 <- ifelse(tvor$temp.avg==30 & tvor$temp.var==0 & tvor$treatment=="p
 tvor <- subset(tvor, keep_p2==1)
 
 
-#remove all temp treatments except 25C const and 30C const
-tvor <- subset(tvor, temp.avg!=28 & temp.var!=10)
+#remove +/- 5 temp fluc treatment
 tvor <- subset(tvor, temp.var!=5)
 
 
@@ -184,7 +185,8 @@ ws_psem_sum
 #plot load effects on number emerged, compared by experiment
 
 #remove all temp treatments except 25 and 30 (repl)
-ad_psub <- subset(ad_p, temp.avg!=20)
+ad_psub <- subset(ad_p, temp.avg!=20 | temp.avg!=28)
+ad_psub <- subset(ad_psub, temp.var==0)
 
 ad_psub$keep <- ifelse(ad_psub$temp.avg==30 & ad_psub$expt=="orig", 0, 1)
 ad_psub <- subset(ad_psub, keep==1)
@@ -206,6 +208,10 @@ com_wsnmem_plot + geom_point(size=6
 
 #quick and dirty analysis of wasp survival to emergence between the two experiments
 
+#make temp.avg factor
+ad_psub$temp.avg <- factor(ad_psub$temp.avg)
+
+
 wsem_mod1 <- glm(cbind(num.em, num.unem) ~ temp.avg * load * expt,
                  family = binomial,
                  data = ad_psub,
@@ -214,157 +220,113 @@ anova(wsem_mod1)
 summary(wsem_mod1)
 
 
-#testing significance of fixed effects
 
-wsem_mod_ta <- glm(cbind(num.em, num.unem) ~ temp.avg,
+#model selection using dredge
+ad_wsem <- select(ad_psub, bug.id, temp.avg, load, expt, num.em, num.unem)
+ad_wsem <- drop_na(ad_wsem)
+
+
+wsem_mod_fd <- glm(cbind(num.em, num.unem) ~ temp.avg * load * expt,
                    family = binomial,
-                   data = ad_psub,
-                   na.action=na.omit)
+                   data = ad_wsem,
+                   na.action=na.fail)
 
-wsem_mod_ld <- glm(cbind(num.em, num.unem) ~ load,
-                   family = binomial,
-                   data = ad_psub,
-                   na.action=na.omit)
+wsem_dredge <- dredge(wsem_mod_fd)
+wsem_dredge #best model is full model
 
 
-wsem_mod_expt <- glm(cbind(num.em, num.unem) ~ expt,
-                     family = binomial,
-                     data = ad_psub,
-                     na.action=na.omit)
+#----------------------
 
+#analysis of wasp survival to emergence, with random effect of individual
 
-wsem_mod_tald <- glm(cbind(num.em, num.unem) ~ temp.avg:load,
-                     family = binomial,
-                     data = ad_psub,
-                     na.action=na.omit)
-
-
-wsem_mod_taex <- glm(cbind(num.em, num.unem) ~ temp.avg:expt,
-                     family = binomial,
-                     data = ad_psub,
-                     na.action=na.omit)
-
-
-
-wsem_mod_ldex <- glm(cbind(num.em, num.unem) ~ load:expt,
-                     family = binomial,
-                     data = ad_psub,
-                     na.action=na.omit)
-
-
-wsem_mod_taldex <- glm(cbind(num.em, num.unem) ~ temp.avg:load:expt,
-                       family = binomial,
-                       data = ad_psub,
-                       na.action=na.omit)
-
-
-wsem_mod_null <- glm(cbind(num.em, num.unem) ~ 1,
-                     family = binomial,
-                     data = ad_psub,
-                     na.action=na.omit)
-
-anova(wsem_mod_null, wsem_re_mod1, wsem_mod_ta, wsem_mod_ld, wsem_mod_expt, 
-      wsem_mod_tald, wsem_mod_taex, wsem_mod_ldex, wsem_re_mod_taldex, test="Chisq")
-
-
-
-
-#------------------------
-
-#overdispersed, so adding a random effect of individual
-
-#rescaling load
+#rescale load
 ad_psub$resc_ld <- rescale(ad_psub$load, to=c(0,1))
 
-#model has a warning about large eigenvalues, something is off here
-wsem_re_mod1 <- glmer(cbind(num.em, num.unem) ~ temp.avg * resc_ld * expt + (1|bug.id),
-                 family = binomial,
-                 data = ad_psub,
-                 na.action=na.omit,
-                 control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+wsem_re_mod <- glmer(cbind(num.em, num.unem) ~ temp.avg * resc_ld * expt + (1|bug.id),
+                   family = binomial,
+                   data = ad_psub,
+                   na.action=na.omit,
+                   control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-anova(wsem_re_mod1)
-summary(wsem_re_mod1)
-
-
-#check singularity (following this guide :https://rstudio-pubs-static.s3.amazonaws.com/33653_57fc7b8e5d484c909b615d8633c01d51.html)
-tt <- getME(wsem_re_mod1,"theta")
-ll <- getME(wsem_re_mod1,"lower")
-min(tt[ll==0])  #not close to 0, so probably not a problem here
-
-#checking gradients (from same guide)
-#scaled gradient (??)
-derivs1 <- wsem_re_mod1@optinfo$derivs
-sc_grad1 <- with(derivs1,solve(Hessian,gradient))
-max(abs(sc_grad1))
-
-#absolute gradient (??)
-max(pmin(abs(sc_grad1),abs(derivs1$gradient)))
+anova(wsem_re_mod)
+summary(wsem_re_mod)
 
 
-#obviously this model isn't super great, but since it's just a quick check I'm going to leave it well 
-#enough alone for now
+#model selection using dredge
+ad_wre <- select(ad_psub, bug.id, temp.avg, resc_ld, expt, num.em, num.unem)
+ad_wre <- drop_na(ad_wre)
 
 
-#test significance of fixed effects
-wsem_re_mod_ta <- glmer(cbind(num.em, num.unem) ~ temp.avg + (1|bug.id),
+wsem_re_mod_fd <- glmer(cbind(num.em, num.unem) ~ temp.avg * resc_ld * expt + (1|bug.id),
+                     family = binomial,
+                     data = ad_wre,
+                     na.action=na.fail,
+                     control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+wsem_re_dredge <- dredge(wsem_re_mod_fd)
+wsem_re_dredge  #best model excludes expt:load and expt:load:temp.avg interactions
+
+
+#best model
+wsem_best <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + expt 
+                   + temp.avg:resc_ld + temp.avg:expt + (1|bug.id),
+                   family = binomial,
+                   data = ad_psub,
+                   na.action=na.omit,
+                   control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+#testing reduced models (without term of interest [and associated interaction terms, if load or expt]) to best fit model
+
+wsem_re_mod_ta <- glmer(cbind(num.em, num.unem) ~ resc_ld + expt + (1|bug.id),
                         family = binomial,
                         data = ad_psub,
                         na.action=na.omit,
                         control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-wsem_re_mod_ld <- glmer(cbind(num.em, num.unem) ~ resc_ld + (1|bug.id),
+
+wsem_re_mod_ld <- glmer(cbind(num.em, num.unem) ~ temp.avg + expt + temp.avg:expt + (1|bug.id),
                         family = binomial,
                         data = ad_psub,
                         na.action=na.omit,
                         control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-wsem_re_mod_expt <- glmer(cbind(num.em, num.unem) ~  expt + (1|bug.id),
+
+wsem_re_mod_expt <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld 
+                          + temp.avg:resc_ld + (1|bug.id),
                           family = binomial,
                           data = ad_psub,
                           na.action=na.omit,
                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-wsem_re_mod_tald <- glmer(cbind(num.em, num.unem) ~ temp.avg:resc_ld + (1|bug.id),
-                          family = binomial,
-                          data = ad_psub,
-                          na.action=na.omit,
-                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
-
-wsem_re_mod_taex <- glmer(cbind(num.em, num.unem) ~ temp.avg:expt + (1|bug.id),
-                          family = binomial,
-                          data = ad_psub,
-                          na.action=na.omit,
-                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-wsem_re_mod_ldex <- glmer(cbind(num.em, num.unem) ~ resc_ld:expt + (1|bug.id),
-                          family = binomial,
-                          data = ad_psub,
-                          na.action=na.omit,
-                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-wsem_re_mod_taldex <- glmer(cbind(num.em, num.unem) ~ temp.avg:resc_ld:expt + (1|bug.id),
+wsem_re_mod_exptta <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + expt 
+                            + temp.avg:resc_ld + (1|bug.id),
                             family = binomial,
                             data = ad_psub,
                             na.action=na.omit,
                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-wsem_re_mod_null <- glmer(cbind(num.em, num.unem) ~ 1 + (1|bug.id),
+wsem_re_mod_tald <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + expt 
+                          + temp.avg:expt + (1|bug.id),
                           family = binomial,
                           data = ad_psub,
                           na.action=na.omit,
                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-anova(wsem_re_mod_null, wsem_re_mod1, wsem_re_mod_ta, wsem_re_mod_ld, wsem_re_mod_expt, 
-      wsem_re_mod_tald, wsem_re_mod_taex, wsem_re_mod_ldex, wsem_re_mod_taldex, test="Chisq")
+
+anova(wsem_best, wsem_re_mod_ta, test="Chisq")
+anova(wsem_best, wsem_re_mod_ld, test="Chisq")
+anova(wsem_best, wsem_re_mod_expt, test="Chisq")
+anova(wsem_best, wsem_re_mod_exptta, test="Chisq")
+anova(wsem_best, wsem_re_mod_tald, test="Chisq")
+
 
 
 
@@ -380,10 +342,67 @@ ad_psub2 <- ad_psub[-c(10, 43), ]
 
 #plot of num em by load, colored by expt, faceted by temp--two outliers removed
 com_wsnmem_plot2 <- ggplot(ad_psub2, aes(x=load, y=num.em, group=expt, color=expt))
-com_wsnmem_plot2 + geom_point(size=6
+num_em <- com_wsnmem_plot2 + geom_point(size=6
 ) + geom_smooth(method = "lm"
-) + scale_color_manual(values=c("black", "#E69F00")
-) + facet_wrap(~temp.avg)
+) + scale_color_manual(values=c("black", "#E69F00"),
+                       breaks = c("cpt", "tvor"),
+                       labels = c("Moore 2019", "Current Study"),
+                       name = "Data"
+) + labs(x="Total Load", y="Number Emerged"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = "none")
+
+
+
+
+#plot of time to emergence by load, colored by expt, faceted by temp--two outliers removed
+com_wsttem_plot2 <- ggplot(ad_psub2, aes(x=load, y=ttem.w, group=expt, color=expt))
+dev_time <- com_wsttem_plot2 + geom_point(size=6
+) + geom_smooth(method = "lm"
+) + scale_color_manual(values=c("black", "#E69F00"),
+                       breaks = c("cpt", "tvor"),
+                       labels = c("Moore 2019", "Current Study"),
+                       name = "Data"
+) + labs(x="Total Load", y="Dev. Time to Emergence"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.875, .8))
+
+
+
+surv_dev <- plot_grid(num_em, dev_time, labels=c("A", "B"), align = "v", ncol=1)
+surv_dev
+
+
 
 
 #NUMBER EMERGED
@@ -409,11 +428,102 @@ ws_psem_sum
 #quick and dirty analysis of wasp survival to emergence between the two experiments--two outliers removed
 
 wsem_mod2 <- glm(cbind(num.em, num.unem) ~ temp.avg * load * expt,
-                 family = binomial,
+                 family = quasibinomial,
                  data = ad_psub2,
                  na.action=na.omit)
-anova(wsem_mod1)
-summary(wsem_mod1)
+anova(wsem_mod2)
+summary(wsem_mod2)
+
+
+#overdispersed, so adding random effect
+
+wsem_re_mod2 <- glmer(cbind(num.em, num.unem) ~ temp.avg * resc_ld * expt + (1|bug.id),
+                      family = binomial,
+                      data = ad_psub2,
+                      na.action=na.omit,
+                      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(wsem_re_mod2)
+summary(wsem_re_mod2)
+
+
+
+#model selection using dredge
+ad_wre2 <- select(ad_psub2, bug.id, temp.avg, resc_ld, expt, num.em, num.unem)
+ad_wre2 <- drop_na(ad_wre2)
+
+
+wsem_re_mod_fd2 <- glmer(cbind(num.em, num.unem) ~ temp.avg * resc_ld * expt + (1|bug.id),
+                        family = binomial,
+                        data = ad_wre2,
+                        na.action=na.fail,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+wsem_re_dredge2 <- dredge(wsem_re_mod_fd2)
+wsem_re_dredge2  #best model excludes expt:load and expt:load:temp.avg interactions
+
+
+#best model
+wsem_best2 <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + expt 
+                   + temp.avg:resc_ld + temp.avg:expt + (1|bug.id),
+                   family = binomial,
+                   data = ad_psub2,
+                   na.action=na.omit,
+                   control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+#testing reduced models (without term of interest [and associated interaction terms, if load or expt]) to best fit model
+
+wsem_re_mod_ta2 <- glmer(cbind(num.em, num.unem) ~ resc_ld + expt + (1|bug.id),
+                        family = binomial,
+                        data = ad_psub2,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+wsem_re_mod_ld2 <- glmer(cbind(num.em, num.unem) ~ temp.avg + expt + temp.avg:expt + (1|bug.id),
+                        family = binomial,
+                        data = ad_psub2,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+wsem_re_mod_expt2 <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld 
+                          + temp.avg:resc_ld + (1|bug.id),
+                          family = binomial,
+                          data = ad_psub2,
+                          na.action=na.omit,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+wsem_re_mod_exptta2 <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + expt 
+                            + temp.avg:resc_ld + (1|bug.id),
+                            family = binomial,
+                            data = ad_psub2,
+                            na.action=na.omit,
+                            control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsem_re_mod_tald2 <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + expt 
+                          + temp.avg:expt + (1|bug.id),
+                          family = binomial,
+                          data = ad_psub2,
+                          na.action=na.omit,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+anova(wsem_best2, wsem_re_mod_ta2, test="Chisq")
+anova(wsem_best2, wsem_re_mod_ld2, test="Chisq")
+anova(wsem_best2, wsem_re_mod_expt2, test="Chisq")
+anova(wsem_best2, wsem_re_mod_exptta2, test="Chisq")
+anova(wsem_best2, wsem_re_mod_tald2, test="Chisq")
+
+
 
 
 
@@ -425,8 +535,28 @@ summary(wsem_mod1)
 com_wsttem_plot2 <- ggplot(ad_psub2, aes(x=load, y=ttem.w, group=expt, color=expt))
 com_wsttem_plot2 + geom_point(size=6
 ) + geom_smooth(method = "lm"
-) + scale_color_manual(values=c("black", "#E69F00")
-) + facet_wrap(~temp.avg)
+) + scale_color_manual(values=c("black", "#E69F00"),
+                       breaks = c("cpt", "tvor"),
+                       labels = c("Moore 2019", "Current Study"),
+                       name = "Data"
+) + labs(x="Total Load", y="Number Emerged"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .8))
 
 
 
@@ -442,6 +572,42 @@ ws_ttem_sum <- summarySE(ad_psub2, measurevar = "ttem.w",
                         groupvars = c("temp.avg", "expt"),
                         na.rm = TRUE)
 ws_ttem_sum
+
+
+#---------------------
+
+#analysis of wasp development time
+
+wdev_mod <- lm(ttem.w ~ temp.avg * load *expt,
+               data = ad_psub2,
+               method = "ML",
+               na.action=na.omit)
+
+anova(wdev_mod)
+summary(wdev_mod)
+
+
+#model selection with dredge:
+ad_dev <- select(ad_psub2, bug.id, temp.avg, load, expt, ttem.w)
+ad_dev <- drop_na(ad_dev)
+
+
+wdev_mod_fd <- lm(ttem.w ~ temp.avg * load *expt,
+               data = ad_dev,
+               method = "ML",
+               na.action=na.fail)
+
+wdev_dredge <- dredge(wdev_mod_fd)
+wdev_dredge #best model removes all interactions
+
+
+wdev_best <- lm(ttem.w ~ temp.avg + load + expt,
+                data=ad_psub2,
+                method = "ML",
+                na.action = na.omit)
+
+anova(wdev_best)
+
 
 
 #--------------------------------
@@ -486,6 +652,9 @@ ad_lng <- subset(ad_lng, keep==1)
 ad_lng$expt <- ifelse(ad_lng$expt=="orig" | ad_lng$expt=="repl", "tvor", ad_lng$expt)
 
 
+#make temp.avg a factor
+ad_lng$temp.avg <- as.factor(ad_lng$temp.avg)
+
 #---------------------
 
 #plot of growth and development for hosts between temp avgs and expts
@@ -509,16 +678,70 @@ age_sum
 lmss_sum$age <- age_sum[ , 6]
 lmss_sum$age_se <- age_sum[ , 8]
 
+
+facet_labels <- c("control" = "Unparasitized", "para" = "Parasitized", "25" = "25", "30" = "30")
+
+
 #plot mean mass and mean age for each temp.avg, treatment and expt
 mn_ma_plot <- ggplot(lmss_sum, aes(x=age, y=log_mss, group=expt, color=expt))
 mn_ma_plot + geom_point(size=6
 ) + geom_line(size=2
 ) + geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
-                  width=.7, size=1.2
+                  width=1, size=1.2
 ) + geom_errorbarh(aes(xmin=age - age_se, xmax=age + age_se),
-                   height=.5, size=1.2
-) + facet_wrap(temp.avg~treatment)
+                   height=1, size=1.2
+) + scale_color_manual(values=c("black", "#E69F00"),
+                       breaks = c("cpt", "tvor"),
+                       labels = c("Moore 2019", "Current Study"),
+                       name = "Data"
+) + labs(x="Age", y="Log(Mass)"
+) + facet_wrap(treatment~temp.avg, labeller = as_labeller(facet_labels)
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .1))
 
+
+
+
+#---------------------
+
+#GAMM analysis of host growth and mass
+
+#subset to only columns in model, remove rows with NAs
+ad_mass <- select(ad_lng, bug.id, temp.avg, expt, treatment, log_mss, age)
+ad_mass <- drop_na(ad_mass)
+
+#make bug.id a factor so it will work as a random effect in the GAMM model
+ad_mass$bug.id <- as.factor(ad_mass$bug.id)
+
+
+#Full GAMM model 
+#Response = log of mass. Smooth by age, with an interaction of parasitization treatment, mean temperature and
+#temperature fluctuation. Smooth of individual added to act as a random effect. Parasitization treatment, mean
+#temperature and temperature fluctuation used as fixed effects. 
+gam_mass_mod<-gam(log_mss ~ s(age, by = interaction(treatment, temp.avg, expt, k=400, bs="ts")) 
+                  + s(bug.id, bs ="re") + treatment * temp.avg * expt,
+                  method="ML", data=ad_mass, na.action = na.omit)
+
+
+anova(gam_mass_mod)
+
+
+
+gam.check(gam_mass_mod)
 
 
 #-------------------------
@@ -562,3 +785,678 @@ nsum_trt
 
 range(ncalc$n)
 mean(ncalc$n)
+
+
+#------------------------
+
+#analyze 25 and 30 const data from const mss expt along with other tv mss expt data, see if results differ in a way that
+#would affect interpretation
+
+#create column that combines mean temp, temp fluc and expt to make subsetting easier
+all_dat <- unite(all_dat, temp_trt_expt, temp.avg, temp.var, expt, sep = "_", remove=FALSE)
+
+
+all_dat$keep <- ifelse(all_dat$temp_trt_expt=="30_0_orig" | all_dat$temp_trt_expt=="30_0_repl" 
+                       | all_dat$temp_trt_expt=="30_10_orig" | all_dat$temp_trt_expt=="25_0_orig" 
+                       | all_dat$temp_trt_expt=="20_0_cpt", 0, 1)
+
+ad_comp <- subset(all_dat, keep==1)
+
+
+#make long data frame
+adc_lng <- gather(ad_comp, instar, mass, mass.3, mass.4, mass.5, mass.end)
+adc_lng$instar <- gsub("mass.", "", adc_lng$instar)
+
+adc_age <- gather(ad_comp, instar, age, tt3, tt4, tt5, ttend)
+adc_age$instar <- gsub("tt", "", adc_age$instar)
+
+adc_age <- select(adc_age, bug.id, treatment, temp.avg, temp.var, instar, age)
+
+adc_lng <- merge(adc_lng, adc_age, by=c("bug.id", "treatment", "temp.avg", "temp.var", "instar"))
+
+
+#make sure columns are correct class
+adc_lng$temp.avg <- as.factor(adc_lng$temp.avg)
+adc_lng$temp.var <- as.factor(adc_lng$temp.var)
+
+
+
+#----------------------------
+
+#ANALYSIS OF HOST MASS USING GAMM MODELS--comparing the results using 25 const and 30 const from cpt data to full tv analysis
+
+#calculate log mass
+adc_lng$log_mss <- log(adc_lng$mass)
+
+#subset to only columns in model, remove rows with NAs (so that predicted and fitted values can be added
+#to the dataframe easily)
+comp_mass <- select(adc_lng, bug.id, temp.avg, temp.var, treatment, log_mss, age)
+comp_mass <- na.omit(comp_mass)
+
+#make bug.id a factor so it will work as a random effect in the GAMM model
+comp_mass$bug.id <- as.factor(comp_mass$bug.id)
+
+
+#Full GAMM model 
+#Response = log of mass. Smooth by age, with an interaction of parasitization treatment, mean temperature and
+#temperature fluctuation. Smooth of individual added to act as a random effect. Parasitization treatment, mean
+#temperature and temperature fluctuation used as fixed effects. 
+gam_mass_mod_cpt<-gam(log_mss ~ s(age, by = interaction(treatment, temp.avg, temp.var, k=1000, bs="ts")) 
+                  + s(bug.id, bs ="re") + treatment * temp.avg * temp.var,
+                  method="ML", data=comp_mass, na.action = na.omit)
+
+
+anova(gam_mass_mod_cpt)
+summary(gam_mass_mod_cpt)
+
+gam.check(gam_mass_mod, type = "deviance")
+
+
+#See if tv gam model can have the fixed effect of fluc temp removed, and if that significantly worsens the model
+#subset to only columns in model, remove rows with NAs (so that predicted and fitted values can be added
+#to the dataframe easily)
+tvor_mass <- select(tvor_lng, bug.id, temp.avg, temp.var, treatment, log_mss, age)
+tvor_mass <- na.omit(tvor_mass)
+
+#make bug.id a factor so it will work as a random effect in the GAMM model
+tvor_mass$bug.id <- as.factor(tvor_mass$bug.id)
+
+
+#Full GAMM model 
+#Response = log of mass. Smooth by age, with an interaction of parasitization treatment, mean temperature and
+#temperature fluctuation. Smooth of individual added to act as a random effect. Parasitization treatment, mean
+#temperature and temperature fluctuation used as fixed effects. 
+gam_mass_mod<-gam(log_mss ~ s(age, by = interaction(treatment, temp.avg, temp.var, k=20, bs="ts")) 
+                  + s(bug.id, bs ="re") + treatment * temp.avg * temp.var,
+                  method="ML", data=tvor_mass, na.action = na.omit)
+
+
+
+#try removing the fluc temp fixed effect
+gam_mass_mod_test<-gam(log_mss ~ s(age, by = interaction(treatment, temp.avg, temp.var, k=20, bs="ts")) 
+                  + s(bug.id, bs ="re") + treatment * temp.avg + temp.avg:temp.var + temp.var:treatment 
+                  + temp.avg:temp.var:treatment,
+                  method="ML", data=tvor_mass, na.action = na.omit)
+
+
+anova(gam_mass_mod_test)
+
+anova(gam_mass_mod, gam_mass_mod_test, test="Chisq")
+AIC(gam_mass_mod, gam_mass_mod_test)
+
+
+#plot gamm model fit and residuals
+#add predicted and residual values to model data set, plot results
+comp_mass$pred <- predict(gam_mass_mod, level=0)
+comp_mass$resid <- residuals(gam_mass_mod, level=0)
+
+
+
+#make a label for the facet wrap panels
+fnames <- c("control" = "NP", "para" = "P", "0" = "0", "10" = "10")
+
+
+
+#plot model residuals against age, color by mean temperature, facet by parasitization treatment and fluctuation
+md_gammod_ra<-ggplot(comp_mass, aes(x=age, y=resid, color=temp.avg))
+md_gammod_ra + geom_point(size=4, shape=1
+) + geom_hline(aes(yintercept=0),
+               color="black",
+               size=1.5, linetype="dashed"
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + labs(x="Age [Days]", y="GAMM Model Residuals"
+) + facet_wrap(treatment~temp.var, labeller = as_labeller(fnames)
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16))
+
+
+
+
+md_gammod_fit<-ggplot(comp_mass, aes(x=age, y=log_mss, group=interaction(bug.id, temp.avg), color=temp.avg))
+md_gammod_fit+geom_point(size=3, shape=1
+) + geom_line(aes(y=pred, group=interaction(bug.id, temp.avg))
+) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
+                       breaks=c("25","28","30"),labels=c("25","28","30"),
+                       guide=guide_legend(keywidth=3)   
+) + labs(x="Age [Days]", y="Log(Mass [mg])"
+) + facet_wrap(treatment~temp.var, labeller = as_labeller(fnames)
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16))
+
+
+
+
+
+#MEAN MASS BY MEAN AGE FOR MANDUCA SEXTA
+
+#Calcualte means and variance of mass and age data
+lmass_sum <- summarySE(adc_lng, measurevar = "log_mss",
+                       groupvars = c("temp.avg", "temp.var", "treatment", "instar"),
+                       na.rm = TRUE)
+
+lmass_sum
+
+
+age_sum <- summarySE(adc_lng, measurevar = "age",
+                     groupvars = c("temp.avg", "temp.var", "treatment", "instar"),
+                     na.rm = TRUE)
+age_sum
+
+
+#add age and age standard error values to mass summary object
+lmass_sum$age <- age_sum[, 6]
+lmass_sum$age_se <- age_sum[, 8]
+
+
+
+#Plot mean mass by mean age, facetted by mean reaing temperature, grouped by rearing temperature variation
+##and parasitization treatment. Color by temp var, line type and point shape by parasitization treatment
+##error bars are standard error for mass (y axis) and age (x axis)
+
+mn_lma_plot <- ggplot(lmass_sum, aes(x=age, y=log_mss, group=interaction(temp.var, treatment), color=temp.var))
+mn_lma_plot + geom_point(aes(shape=treatment),
+                         size=6, stroke=2
+) + geom_line(aes(linetype=treatment),
+              size=2
+) + geom_errorbar(aes(ymin=log_mss - se, ymax=log_mss + se),
+                  width=2, size=1.2
+) + geom_errorbarh(aes(xmin=age - age_se, xmax=age + age_se),
+                   height=.4, size=1.2
+) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                       breaks=c("0","10"),labels=c("0","10"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_linetype_manual(values=c("solid","dashed"),name="Treatment",
+                          breaks=c("control","para"),labels=c("NP","P"),
+                          guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_shape_manual(values = c(16,2),name="Treatment",
+                       breaks=c("control","para"),labels=c("NP","P"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + labs(x="Age [days]",y="Log(Mass) [mg]"
+) + facet_wrap(~temp.avg
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_text(size = 18),
+          axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
+          legend.position = c(.9, .25))
+
+
+#---------------------
+
+#gamm model with 25 const and 30 const from cpt experiment 
+#Looking at parasitized treatment with effects of load
+
+adcp_lng <- subset(adc_lng, treatment=="para")
+
+
+#subset to only columns in model, and remove rows with NAs (so that predicted and fitted values can be
+#added to the dataframe easily)
+p_mass<-select(adcp_lng, bug.id, temp.avg, temp.var, load, log_mss, age)
+p_mass<-na.omit(p_mass)
+
+#convert bug.id to factor so it functions properly as a random effect
+p_mass$bug.id<-as.factor(p_mass$bug.id)
+
+
+#run a GAMM with age and load as separate smooths--does not have an interaction with temp this way (2 2D surfaces, instead
+## of one 3D surface)
+gam_pml_nointmod<-gam(log_mss ~ s(age, by=interaction(temp.avg, temp.var, bs="ts")) 
+                      + s(load, by=interaction(temp.avg, temp.var, k=100, bs="ts")) + s(bug.id, bs="re") 
+                      + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
+
+anova(gam_pml_nointmod)
+summary(gam_pml_nointmod)
+
+gam.check(gam_pml_nointmod)
+
+
+
+#------------------------
+
+#ANALYSES OF WASP SURVIVAL TO EMERGENCE AND ECLOSION
+
+adcp <- subset(ad_comp, treatment=="para")
+
+#make temp.avg a factor
+adcp$temp.avg <- factor(adcp$temp.avg)
+
+#Remove the 30+/-10 treatment, as no wasps survived, the mechanism is not the same as the other treatments
+
+#create combo column with temp.avg and temp.var
+adcp <- unite(adcp, "tatv", temp.avg, temp.var, remove = FALSE)
+
+adcp_nw <- subset(adcp, tatv!="30_10")
+
+#make temp var a character instead of factor
+adcp_nw$temp.var <- as.character(adcp_nw$temp.var)
+
+
+#rescale load 
+adcp_nw$resc_ld <- rescale(adcp_nw$load, to=c(0,1))
+
+
+
+#Full GLMER model, binomial distribution. Number survived to emergence (success) vs number that failed to emerge (failure) 
+#as response variable
+#Mean temperature, temperature fluctuation and rescaled load as fixed effects. Random intercept of individual
+wsem_nw_re_mod1 <- glmer(cbind(num.em, num.unem) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                           family=binomial,
+                           data=adcp_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(wsem_nw_re_mod1)
+summary(wsem_nw_re_mod1)
+
+
+
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+adcp_wsmod <- adcp_nw %>% select(bug.id, temp.avg, temp.var, resc_ld, num.em, num.unem)
+adcp_wsmod <- drop_na(adcp_wsmod)
+
+#model with data frame with no NAs, na.action set to na.fail
+wsem_nw_re_mod_d <- glmer(cbind(num.em, num.unem) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                         family=binomial,
+                         data=adcp_wsmod,
+                         na.action=na.fail,
+                         control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 200000)))
+
+
+wsmod_dredge <- dredge(wsem_nw_re_mod_d)
+wsmod_dredge
+
+
+#reduced model from dredge--the next best model has almost the same terms as with the original data, and the difference in AIC
+#is very small. Ask Joel whether it could be appropriate to use the model with comparable terms
+wsem_nw_mod_rd <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                        + temp.avg:resc_ld + temp.var:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(wsem_nw_mod_rd)
+summary(wsem_nw_mod_rd)
+
+
+
+#compare models without terms of interest to model from dredge. 
+
+wsem_nw_mod_ta <- glmer(cbind(num.em, num.unem) ~ temp.var + resc_ld + temp.var:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+wsem_nw_mod_tv <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + temp.avg:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+wsem_nw_mod_ld <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + temp.avg:temp.var + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+wsem_nw_mod_tatv <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld
+                        + temp.avg:resc_ld + temp.var:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+wsem_nw_mod_tald <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                        + temp.var:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsem_nw_mod_tvld <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                        + temp.avg:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+anova(wsem_nw_mod_rd, wsem_nw_mod_ta, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_tv, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_ld, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_tatv, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_tald, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_tvld, test="Chisq")
+
+
+
+#Plot mean wasp survival to emergence
+#mean proportion surviving to emergence
+psem_sum <- summarySE(adcp, measurevar = "ps.em",
+                      groupvars = c("temp.avg", "temp.var"),
+                      na.rm = TRUE)
+psem_sum
+
+
+#making temp.avg numeric instead of a factor
+psem_sum$temp.avg <- as.numeric(psem_sum$temp.avg)
+psem_sum$temp.avg <- ifelse(psem_sum$temp.avg==1, 25,
+                            ifelse(psem_sum$temp.avg==2, 28, 30))
+
+
+
+#plot mean proportion surviving to emergence, with mean temperature on the x axis, proportion emerged on y axis
+#color by fluctuation. Error bars = SE
+#saved as individual object for combining with prop ecl for full figure
+mn_psem_plot <- ggplot(psem_sum, aes(x=temp.avg, y=ps.em, color=as.character(temp.var)))
+mn_psem_plot <- mn_psem_plot + geom_point(size=6, shape=2, stroke=2
+) + geom_line(size = 2, linetype="dashed"
+) + geom_errorbar(aes(ymin = ps.em-se, ymax = ps.em+se),
+                  width=.5, size=1.2
+) + scale_color_manual(values=c("#56B4E9","#D55E00"),name=c("Fluctuation [C]"),
+                       breaks=c("0","10"),labels=c("0","10"),
+                       guide=guide_legend(keywidth = 6, keyheight = 1.5)
+) + scale_x_continuous(limits=c(24.5,30.5),
+                       breaks = c(25, 28, 30)
+) + scale_y_continuous(limits = c(0, .95),
+                       breaks = c(0, 0.2, 0.4, 0.6, 0.8)
+) + labs(x="Mean Temperature [C]", y="Prop. Emergence"
+) + theme(text = element_text(family=("Cambria")),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 20),
+          axis.text.y = element_text(size = 20),
+          axis.title.x = element_text(size = 20),
+          axis.title.y = element_text(size = 20),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.position = "none")
+
+mn_psem_plot
+
+
+
+#---------------------
+#analysis of wasp dev time
+
+wdev_em_mod1 <- lm(ttem.w ~ temp.avg * temp.var * load,
+                   data = adcp_nw,
+                   na.action = na.omit)
+
+anova(wdev_em_mod1)
+
+
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+adcp_wdevem_mod <- adcp_nw %>% select(bug.id, temp.avg, temp.var, load, ttem.w)
+adcp_wdevem_mod <- drop_na(adcp_wdevem_mod)
+
+#model with data frame with no NAs, na.action set to na.fail
+wdev_em_mod <- lm(ttem.w ~ temp.avg * temp.var * load,
+                  data = adcp_wdevem_mod,
+                  na.action = na.fail)
+
+#dredged models
+wdev_em_dredge <- dredge(wdev_em_mod)
+wdev_em_dredge
+
+
+#model from dredge
+wdev_em_mod_rd <- lm(ttem.w ~ temp.avg + temp.var + load +temp.avg:temp.var
+                     + temp.avg:load + temp.var:load,
+                   data = adcp_nw,
+                   na.action = na.omit)
+
+anova(wdev_em_mod_rd)
+
+
+
+
+#---------------------------------
+
+#switching best fit models for each data set -- WASP SURVIVAL TO EMERGENCE
+
+#TV data, wasp survival to em
+
+#create combo column with temp.avg and temp.var
+tvor_p <- unite(tvor_p, "tatv", temp.avg, temp.var, remove = FALSE)
+
+tvor_nw <- subset(tvor_p, tatv!="30_10")
+
+#make temp var a character instead of factor
+tvor_nw$temp.var <- as.character(tvor_nw$temp.var)
+
+
+#rescale load 
+tvor_nw$resc_ld <- rescale(tvor_nw$load, to=c(0,1))
+
+
+
+#Full GLMER model, binomial distribution. Number survived to emergence (success) vs number died (failure) as response variable
+#Mean temperature, temperature fluctuation and rescaled load as fixed effects. Random intercept of individual
+wsem_nw_re_mod1 <- glmer(cbind(num.em, num.unem) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                         family=binomial,
+                         data=tvor_nw,
+                         na.action=na.omit,
+                         control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(wsem_nw_re_mod1)
+summary(wsem_nw_re_mod1)
+
+
+
+#model selection using dredge()
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wsem <- tvor_nw %>% select(bug.id, temp.avg, temp.var, resc_ld, num.em, num.unem)
+tvor_wsem <- drop_na(tvor_wsem)
+
+
+#model with dataset without NAs, na.action set to na.fail
+wsem_nw_re_mod <- glmer(cbind(num.em, num.unem) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=tvor_wsem,
+                        na.action=na.fail,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsem_dredge <- dredge(wsem_nw_re_mod)
+wsem_dredge
+
+
+#reduced model from dredge
+wsem_nw_mod_tv <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                        + (1|bug.id),
+                        family=binomial,
+                        data=tvor_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+
+
+#Best fit model from CPT data, fit to TV only data
+wsem_nw_comp_mod_tv <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                          + temp.avg:resc_ld + temp.var:resc_ld + (1|bug.id),
+                          family=binomial,
+                          data=tvor_nw,
+                          na.action=na.omit,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+#compare models
+anova(wsem_nw_mod_tv, wsem_nw_comp_mod_tv, test="Chisq")
+
+
+
+
+#CPT data
+#reduced model from dredge
+wsem_nw_mod_cpt <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                        + temp.avg:resc_ld + temp.var:resc_ld + (1|bug.id),
+                        family=binomial,
+                        data=adcp_nw,
+                        na.action=na.omit,
+                        control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+#best fit model of TV data
+wsem_nw_mod_cpt_comp <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var 
+                              + (1|bug.id),
+                              family=binomial,
+                              data=adcp_nw,
+                              na.action=na.omit,
+                              control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+#compare models
+anova(wsem_nw_mod_cpt, wsem_nw_mod_cpt_comp, test="Chisq")
+
+
+
+#---------------------------------
+
+#switching best fit models for each data set -- WASP DEVELOPMENT TO EMERGENCE
+
+
+#Use the dataset without 30.10 treatment group
+
+#Linear model of development time to emergence from the host; time from oviposition to emergence (in days)
+#as response variable, mean temperature (factor), fluctuation (character) and load (numeric) as fixed effects.  
+wdev_em_mod1 <- lm(ttem.w ~ temp.avg * temp.var * load,
+                   data = tvor_nw,
+                   na.action = na.omit)
+
+anova(wdev_em_mod1)
+
+
+
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wdevem_mod <- tvor_nw %>% select(bug.id, temp.avg, temp.var, load, ttem.w)
+tvor_wdevem_mod <- drop_na(tvor_wdevem_mod)
+
+#model with data frame with no NAs, na.action set to na.fail
+wdev_em_mod <- lm(ttem.w ~ temp.avg * temp.var * load,
+                  data = tvor_wdevem_mod,
+                  na.action = na.fail)
+
+#dredged models
+wdev_em_dredge <- dredge(wdev_em_mod)
+wdev_em_dredge
+
+
+
+#Reduced model from dredge
+wdev_em_mod_tv <- lm(ttem.w ~ temp.avg + temp.var + load + temp.avg:temp.var + temp.avg:load,
+                   data = tvor_nw,
+                   na.action = na.omit)
+
+
+
+#best fit model from CPT data
+wdev_em_mod_tv_comp <- lm(ttem.w ~ temp.avg + temp.var + load +temp.avg:temp.var
+                     + temp.avg:load + temp.var:load,
+                     data = tvor_nw,
+                     na.action = na.omit)
+
+
+anova(wdev_em_mod_tv, wdev_em_mod_tv_comp, test="Chisq")
+AIC(wdev_em_mod_tv, wdev_em_mod_tv_comp)
+
+logLik(wdev_em_mod_tv)
+logLik(wdev_em_mod_tv_comp)
+
+
+
+
+#analysis of wasp dev time--CPT DATA
+
+wdev_em_mod_cpt <- lm(ttem.w ~ temp.avg * temp.var * load,
+                   data = adcp_nw,
+                   na.action = na.omit)
+
+anova(wdev_em_mod_cpt)
+
+
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+adcp_wdevem_mod <- adcp_nw %>% select(bug.id, temp.avg, temp.var, load, ttem.w)
+adcp_wdevem_mod <- drop_na(adcp_wdevem_mod)
+
+#model with data frame with no NAs, na.action set to na.fail
+wdev_em_mod <- lm(ttem.w ~ temp.avg * temp.var * load,
+                  data = adcp_wdevem_mod,
+                  na.action = na.fail)
+
+#dredged models
+wdev_em_dredge <- dredge(wdev_em_mod)
+wdev_em_dredge
+
+
+#model from dredge
+wdev_em_mod_cpt <- lm(ttem.w ~ temp.avg + temp.var + load +temp.avg:temp.var
+                     + temp.avg:load + temp.var:load,
+                     data = adcp_nw,
+                     na.action = na.omit)
+
+
+#best fit model from TV data
+wdev_em_mod_cpt_comp <- lm(ttem.w ~ temp.avg + temp.var + load + temp.avg:temp.var + temp.avg:load,
+                           data = adcp_nw,
+                           na.action = na.omit)
+
+
+#compare models
+anova(wdev_em_mod_cpt, wdev_em_mod_cpt_comp, test="Chisq")
+AIC(wdev_em_mod_cpt, wdev_em_mod_cpt_comp)
+
+logLik(wdev_em_mod_cpt)
+logLik(wdev_em_mod_cpt_comp)
