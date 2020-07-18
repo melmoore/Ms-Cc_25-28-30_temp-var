@@ -713,7 +713,7 @@ mald25_plot <- ggplot(tvor_lp25, aes(x=age, y=log_mss, group=bug.id,
 mald25_plot <-  mald25_plot + geom_line(size=2
 ) + scale_color_viridis(
 ) + facet_wrap(~temp.var
-) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "25C"
+) + labs(x="Age [Days]", y="Log(Mass [mg])\n", title = "25C"
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
                                           size = 1),
@@ -724,7 +724,7 @@ mald25_plot <-  mald25_plot + geom_line(size=2
           axis.ticks.length = unit(2, "mm"),
           axis.text.x = element_text(size = 18),
           axis.text.y = element_text(size = 18),
-          axis.title.x = element_text(size = 18),
+          axis.title.x = element_blank(),
           axis.title.y = element_text(size = 18),
           legend.position = "none")
 
@@ -737,7 +737,31 @@ mald28_plot <- ggplot(tvor_lp28, aes(x=age, y=log_mss, group=bug.id,
 mald28_plot <-  mald28_plot + geom_line(size=2
 ) + scale_color_viridis(
 ) + facet_wrap(~temp.var
-) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "28C"
+) + labs(x="Age [Days]", y="Log(Mass [mg])\n", title = "28C"
+) + theme(text = element_text(family=("Cambria")),
+          strip.background = element_rect(colour="black",linetype = "solid",fill="white",
+                                          size = 1),
+          strip.text = element_text(size=18),
+          axis.line.x=element_line(colour = 'black', size = 1),
+          axis.line.y=element_line(colour = 'black', size = 1),
+          axis.ticks = element_line(colour = 'black', size = 1),
+          axis.ticks.length = unit(2, "mm"),
+          axis.text.x = element_text(size = 18),
+          axis.text.y = element_text(size = 18),
+          axis.title.x = element_blank(),
+          axis.title.y = element_text(size = 18),
+          legend.position = "none")
+
+mald28_plot
+
+
+#30
+mald30_plot <- ggplot(tvor_lp30, aes(x=age, y=log_mss, group=bug.id,
+                                     color=load))
+mald30_plot <- mald30_plot + geom_line(size=2
+) + scale_color_viridis(name="Load"
+) + facet_wrap(~temp.var
+) + labs(x="Age [Days]", y="Log(Mass [mg])\n", title = "30C"
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
                                           size = 1),
@@ -750,15 +774,18 @@ mald28_plot <-  mald28_plot + geom_line(size=2
           axis.text.y = element_text(size = 18),
           axis.title.x = element_text(size = 18),
           axis.title.y = element_text(size = 18),
+          legend.background = element_rect(color="black",linetype="solid"),
+          legend.text = element_text(size=16),
+          legend.title = element_text(size=16),
           legend.position = "none")
 
-mald28_plot
+mald30_plot
 
 
-#30
-mald30_plot <- ggplot(tvor_lp30, aes(x=age, y=log_mss, group=bug.id,
+
+legend_plot <- ggplot(tvor_lp30, aes(x=age, y=log_mss, group=bug.id,
                                      color=load))
-mald30_plot <- mald30_plot + geom_line(size=2
+legend_plot <- legend_plot + geom_line(size=2
 ) + scale_color_viridis(name="Load"
 ) + facet_wrap(~temp.var
 ) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "30"
@@ -776,14 +803,14 @@ mald30_plot <- mald30_plot + geom_line(size=2
           axis.title.y = element_text(size = 18),
           legend.background = element_rect(color="black",linetype="solid"),
           legend.text = element_text(size=16),
-          legend.title = element_text(size=16),
-          legend.position = c(0.95, 0.3))
+          legend.title = element_text(size=16))
 
-mald30_plot
 
+
+legend <- get_legend(legend_plot)
 
 #combine plots with cowplot
-suppl_indload_fig <- plot_grid(mald25_plot, mald28_plot, mald30_plot)
+suppl_indload_fig <- plot_grid(mald25_plot, mald28_plot, mald30_plot, ncol=1)
 suppl_indload_fig
 
 
@@ -851,9 +878,9 @@ mn_lmald25_plot <- ggplot(massbin.sum25, aes(x=age, y=log_mss, color=bin))
 mn_lmald25_plot <-  mn_lmald25_plot + geom_point(size=6
 ) + geom_line(size=1.7
 ) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
-                  width=.9, size=1
+                  width=1.5, size=1
 ) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
-                   height=.3, size=1
+                   height=.5, size=1
 ) + scale_color_viridis(discrete = TRUE, breaks=c(50, 100, 150, 200, 250),
                         name="Load", labels=c("<50", "<100", "<150", "<200", "<250")
 ) + facet_wrap(~temp.var
@@ -868,8 +895,8 @@ mn_lmald25_plot <-  mn_lmald25_plot + geom_point(size=6
         axis.ticks.length = unit(2, "mm"),
         axis.text.x = element_text(size = 18),
         axis.text.y = element_text(size = 18),
-        axis.title.x = element_text(size = 18),
-        axis.title.y = element_text(size = 18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
         legend.position = "none")
 
 mn_lmald25_plot
@@ -881,9 +908,9 @@ mn_lmald28_plot <- ggplot(massbin.sum28, aes(x=age, y=log_mss, color=bin))
 mn_lmald28_plot <-  mn_lmald28_plot + geom_point(size=6
 ) + geom_line(size=1.7
 ) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
-                  width=.9, size=1
+                  width=1.5, size=1
 ) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
-                   height=.3, size=1
+                   height=.5, size=1
 ) + scale_color_viridis(discrete = TRUE, breaks=c(50, 100, 150, 200, 250),
                         name="Load", labels=c("<50", "<100", "<150", "<200", "<250")
 ) + facet_wrap(~temp.var
@@ -898,8 +925,8 @@ mn_lmald28_plot <-  mn_lmald28_plot + geom_point(size=6
           axis.ticks.length = unit(2, "mm"),
           axis.text.x = element_text(size = 18),
           axis.text.y = element_text(size = 18),
-          axis.title.x = element_text(size = 18),
-          axis.title.y = element_text(size = 18),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
           legend.position = "none")
 
 mn_lmald28_plot
@@ -910,13 +937,13 @@ mn_lmald30_plot <- ggplot(massbin.sum30, aes(x=age, y=log_mss, color=bin))
 mn_lmald30_plot <-  mn_lmald30_plot + geom_point(size=6
 ) + geom_line(size=1.7
 ) + geom_errorbar(aes(ymin = log_mss - se, ymax = log_mss + se),
-                  width=.9, size=1
+                  width=1.5, size=1
 ) + geom_errorbarh(aes(xmin = age - age_se, xmax = age + age_se),
-                   height=.3, size=1
+                   height=.5, size=1
 ) + scale_color_viridis(discrete = TRUE, breaks=c(50, 100, 150, 200, 250),
                         name="Load", labels=c("<50", "<100", "<150", "<200", "<250")
 ) + facet_wrap(~temp.var
-) + labs(x="Age [Days]", y="Log(Mass [mg])", title = "30C"
+) + labs(x="Age [Days]", y="Log(Mass [mg])\n", title = "30C"
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
                                           size = 1),
@@ -928,18 +955,27 @@ mn_lmald30_plot <-  mn_lmald30_plot + geom_point(size=6
           axis.text.x = element_text(size = 18),
           axis.text.y = element_text(size = 18),
           axis.title.x = element_text(size = 18),
-          axis.title.y = element_text(size = 18),
+          axis.title.y = element_blank(),
           legend.background = element_rect(color="black",linetype="solid"),
           legend.text = element_text(size=16),
           legend.title = element_text(size=16),
-          legend.position = c(0.9, 0.4))
+          legend.position = "none")
 
 mn_lmald30_plot
 
 
 #combining into 1 figure (using cowplot)
-suppl_load_fig<-plot_grid(mn_lmald25_plot, mn_lmald28_plot, mn_lmald30_plot)
+suppl_load_fig<-plot_grid(mn_lmald25_plot, mn_lmald28_plot, mn_lmald30_plot, ncol=1)
 suppl_load_fig
+
+
+#combine individual load and mn load plots into one 
+tot_suppl_ld_fig <- plot_grid(suppl_indload_fig, suppl_load_fig, labels=c("A", "B"), ncol=2)
+tot_suppl_ld_fig
+
+
+ts_ld_fig_leg <- plot_grid(tot_suppl_ld_fig, legend, rel_widths = c(3, .4))
+ts_ld_fig_leg
 
 
 #--------------------
