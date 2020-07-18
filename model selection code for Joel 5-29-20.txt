@@ -1,0 +1,79 @@
+#model selection using dredge() 
+
+#dredge requires dataframe with no NAs--subsetting to only columns in the model
+tvor_wsmod <- tvor_nw %>% select(bug.id, temp.avg, temp.var, resc_ld, num.ecl, tot.died)
+tvor_wsmod <- drop_na(tvor_wsmod)
+
+#full model with data frame with no NAs, na.action set to na.fail
+ws_nowowe_re_mod <- glmer(cbind(num.ecl, tot.died) ~ temp.avg * temp.var * resc_ld + (1|bug.id),
+                          family=binomial,
+                          data=tvor_wsmod,
+                          na.action=na.fail,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsmod_dredge <- dredge(ws_nowowe_re_mod)
+wsmod_dredge
+
+#best model is one without the interaction between tv and load, and without 3 way interaction
+
+
+#reduced model from dredge:
+ws_nowowe_re_mod_rd <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + resc_ld + temp.avg:temp.var +
+                           temp.avg:resc_ld + (1|bug.id),
+                           family=binomial,
+                           data=tvor_nw,
+                           na.action=na.omit,
+                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+anova(ws_nowowe_re_mod_rd)
+
+
+
+
+#Models with individual fixed effects, to test significance of each against dredge model
+
+
+ws_nowowe_re_mod_ta <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tv <- glmer(cbind(num.ecl, tot.died) ~ temp.var + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_ld <- glmer(cbind(num.ecl, tot.died) ~ resc_ld + (1|bug.id),
+                             family=binomial,
+                             data=tvor_nw,
+                             na.action=na.omit,
+                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tatv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+ws_nowowe_re_mod_tald <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:resc_ld + (1|bug.id),
+                               family=binomial,
+                               data=tvor_nw,
+                               na.action=na.omit,
+                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+
+#comparing fixed effects to reduced model
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ta, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tv, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ld, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tatv, test="Chisq")
+anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tald, test="Chisq")
+
