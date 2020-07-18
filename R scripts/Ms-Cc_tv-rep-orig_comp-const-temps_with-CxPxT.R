@@ -71,15 +71,19 @@ cpt_p <- subset(cpt, treatment=="para")
 
 #TV data cleaning
 
-#remove parasitized wanderers and WOWEs that wandered
-tvor$keep_p <- ifelse(tvor$treatment=="para" & tvor$end.class=="wand", 0, 1)
 
-tvor <- subset(tvor, keep_p==1)
+#make sorting column to remove orig 30 data
+tvor$keep <- ifelse(tvor$temp.avg==30 & tvor$expt=="orig", 0, 1)
+tvor <- subset(tvor, keep==1)
 
 
-#remove parasitized individuals with too large loads (>300)
+#remove individuals with overly large loads (>300)
 tvor$keep_ld <- ifelse(tvor$treatment=="para" & tvor$load > 300, 0, 1)
 tvor <- subset(tvor, keep_ld==1)
+
+#remove wanderers and WOWEs that wandered
+tvor$keep_p <- ifelse(tvor$treatment=="para" & tvor$end.class=="wand", 0, 1)
+tvor <- subset(tvor, keep_p==1)
 
 
 #remove WOWEs in 30C treatment
@@ -87,12 +91,9 @@ tvor$keep_p2 <- ifelse(tvor$temp.avg==30 & tvor$temp.var==0 & tvor$treatment=="p
 tvor <- subset(tvor, keep_p2==1)
 
 
-#remove +/- 5 temp fluc treatment
-tvor <- subset(tvor, temp.var!=5)
+#make temp.var a character, removing the now non existant +/-5 treatment
+tvor$temp.var <- as.character(tvor$temp.var)
 
-
-#create subset of parasitized individuals
-tvor_p <- subset(tvor, treatment=="para")
 
 
 #------------------------
@@ -132,6 +133,9 @@ cpt <- subset(cpt, end.class!="unk")
 
 #rename temp, wander and emergence columns
 cpt <-  cpt %>% rename(date.wand = date.wander, mass.wand = mass.wander, mass.48em = mass.befem, temp.avg = temp)
+
+#make temp.var a character
+cpt$temp.var <- as.character(cpt$temp.var)
 
 
 
@@ -180,7 +184,7 @@ ws_psem_sum
 
 
 
-#---------------------
+#plot load effects, comparing experiments---------------------
 
 #plot load effects on number emerged, compared by experiment
 
@@ -204,7 +208,7 @@ com_wsnmem_plot + geom_point(size=6
 ) + facet_wrap(~temp.avg)
 
 
-#----------------
+#quick analysis of wasp survival between experiments----------------
 
 #quick and dirty analysis of wasp survival to emergence between the two experiments
 
@@ -235,7 +239,7 @@ wsem_dredge <- dredge(wsem_mod_fd)
 wsem_dredge #best model is full model
 
 
-#----------------------
+#RE model of wasp survival between experiments----------------------
 
 #analysis of wasp survival to emergence, with random effect of individual
 
@@ -330,7 +334,7 @@ anova(wsem_best, wsem_re_mod_tald, test="Chisq")
 
 
 
-#--------------------
+#removing outliers in CPT data--------------------
 
 #Joel noted two points in cpt data that have much lower num.em at 30 than the rest of the data, suggested 
 #removing and seeing how that affected slope/difference between tv data
@@ -527,7 +531,7 @@ anova(wsem_best2, wsem_re_mod_tald2, test="Chisq")
 
 
 
-#----------------------
+#effects of experiment on dev time plots----------------------
 
 #effects on wasp development time
 
@@ -574,7 +578,7 @@ ws_ttem_sum <- summarySE(ad_psub2, measurevar = "ttem.w",
 ws_ttem_sum
 
 
-#---------------------
+#analysis of wasp dev time between experiments---------------------
 
 #analysis of wasp development time
 
@@ -610,7 +614,7 @@ anova(wdev_best)
 
 
 
-#--------------------------------
+#creating long data frame--------------------------------
 
 #combine wandering and emergence into end columm for preparation to convert data frame to long format
 
@@ -625,7 +629,7 @@ all_dat$keep <- NULL
 
 #make combined data set into long format to compare host growth and development time
 
-all_dat_sub <- subset(all_dat, temp.avg!=20)
+all_dat_sub <- subset(all_dat, temp.avg!=20 & temp.avg!=28)
 
 ad_lng <- gather(all_dat_sub, instar, mass, mass.3, mass.4, mass.5, mass.end)
 ad_lng$instar <- gsub("mass.", "", ad_lng$instar)
@@ -655,21 +659,24 @@ ad_lng$expt <- ifelse(ad_lng$expt=="orig" | ad_lng$expt=="repl", "tvor", ad_lng$
 #make temp.avg a factor
 ad_lng$temp.avg <- as.factor(ad_lng$temp.avg)
 
-#---------------------
+#plot of mn mass X mn age between experiments---------------------
 
 #plot of growth and development for hosts between temp avgs and expts
 
 #take log of mass
 ad_lng$log_mss <- log(ad_lng$mass)
 
+#remove the +/-10 treatments
+ad_lngc <- subset(ad_lng, temp.var=="0")
+
 #means of mass and age
-lmss_sum <- summarySE(ad_lng, measurevar = "log_mss",
+lmss_sum <- summarySE(ad_lngc, measurevar = "log_mss",
                       groupvars = c("temp.avg", "treatment", "expt", "instar"),
                       na.rm = TRUE)
 lmss_sum
 
 
-age_sum <- summarySE(ad_lng, measurevar = "age",
+age_sum <- summarySE(ad_lngc, measurevar = "age",
                      groupvars = c("temp.avg", "treatment", "expt", "instar"),
                      na.rm = TRUE)
 age_sum
@@ -677,6 +684,7 @@ age_sum
 
 lmss_sum$age <- age_sum[ , 6]
 lmss_sum$age_se <- age_sum[ , 8]
+
 
 
 facet_labels <- c("control" = "Unparasitized", "para" = "Parasitized", "25" = "25", "30" = "30")
@@ -694,7 +702,7 @@ mn_ma_plot + geom_point(size=6
                        breaks = c("cpt", "tvor"),
                        labels = c("Moore 2019", "Current Study"),
                        name = "Data"
-) + labs(x="Age", y="Log(Mass)"
+) + labs(x="Age", y="Log(Mass [mg])"
 ) + facet_wrap(treatment~temp.avg, labeller = as_labeller(facet_labels)
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
