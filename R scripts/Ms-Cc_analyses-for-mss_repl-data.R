@@ -178,6 +178,9 @@ md_gammod_fit+geom_point(size=3, shape=1
 
 
 
+
+
+
 #using geom_smooth instead of geom_line to try and get an average line over temp.avg and not by individual?
 #not sure if this is appropriate.
 md_gammod_fit<-ggplot(tvor_mass, aes(x=age, y=log_mss, color=temp.avg))
@@ -223,13 +226,14 @@ p_mass$bug.id<-as.factor(p_mass$bug.id)
 
 #run a GAMM with age and load as separate smooths--does not have an interaction with temp this way (2 2D surfaces, instead
 ## of one 3D surface)
-gam_pml_nointmod<-gam(log_mss ~ s(age, by=interaction(temp.avg, temp.var, k=10, bs="ts")) 
+gam_pml_nointmod<-gam(log_mss ~ s(age, by=interaction(temp.avg, temp.var, bs="ts")) 
                       + s(load, by=interaction(temp.avg, temp.var, k=10, bs="ts")) + s(bug.id, bs="re") 
                       + temp.avg * temp.var, method="ML", data=p_mass, na.action = na.omit)
 
 anova(gam_pml_nointmod)
 summary(gam_pml_nointmod)
 
+gam.check(gam_pml_nointmod)
 
 #Model with age and load in separate smooths
 #make columns with predicted and residual values for plotting
@@ -256,7 +260,7 @@ pmlni_gammod_rl+geom_point(size=4, shape=1
 ) + scale_color_manual(values=c("#009E73","#E69F00","#000000"),name=c("Avg. Temp. [C]"),
                        breaks=c("25","28","30"),labels=c("25","28","30"),
                        guide=guide_legend(keywidth=3)   
-) + labs(x="Age [Days]", y="GAMM Model Residuals"
+) + labs(x="Total Load", y="GAMM Model Residuals"
 ) + facet_wrap(~temp.var, labeller = as_labeller(fnames)
 ) + theme(text = element_text(family=("Cambria")),
           strip.background = element_rect(colour="black",linetype = "solid",fill="white",
@@ -272,8 +276,7 @@ pmlni_gammod_rl+geom_point(size=4, shape=1
           axis.title.y = element_text(size = 18),
           legend.background = element_rect(color="black",linetype="solid"),
           legend.text = element_text(size=16),
-          legend.title = element_text(size=16),
-          legend.position = c(0.85, 0.2))
+          legend.title = element_text(size=16))
 
 
 
@@ -340,73 +343,6 @@ summary(ws_nowowe_re_mod1)
 
 
 
-#determining significance of fixed effects
-
-ws_nowowe_re_mod_null <- glmer(cbind(num.ecl, tot.died) ~ 1 + (1|bug.id),
-                               family=binomial,
-                               data=tvor_nw,
-                               na.action=na.omit,
-                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_ta <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + (1|bug.id),
-                             family=binomial,
-                             data=tvor_nw,
-                             na.action=na.omit,
-                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_tv <- glmer(cbind(num.ecl, tot.died) ~ temp.var + (1|bug.id),
-                             family=binomial,
-                             data=tvor_nw,
-                             na.action=na.omit,
-                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_ld <- glmer(cbind(num.ecl, tot.died) ~ resc_ld + (1|bug.id),
-                             family=binomial,
-                             data=tvor_nw,
-                             na.action=na.omit,
-                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_tatv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var + (1|bug.id),
-                               family=binomial,
-                               data=tvor_nw,
-                               na.action=na.omit,
-                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_tald <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:resc_ld + (1|bug.id),
-                               family=binomial,
-                               data=tvor_nw,
-                               na.action=na.omit,
-                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_ldtv <- glmer(cbind(num.ecl, tot.died) ~ temp.var:resc_ld + (1|bug.id),
-                               family=binomial,
-                               data=tvor_nw,
-                               na.action=na.omit,
-                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_tatvld <- glmer(cbind(num.ecl, tot.died) ~ temp.avg:temp.var:resc_ld + (1|bug.id),
-                                 family=binomial,
-                                 data=tvor_nw,
-                                 na.action=na.omit,
-                                 control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_ta, test="Chisq")
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tv, test="Chisq")
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_ld, test="Chisq")
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tatv, test="Chisq")
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tald, test="Chisq")
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_ldtv, test="Chisq")
-anova(ws_nowowe_re_mod1, ws_nowowe_re_mod_tatvld, test="Chisq")
-
-
 #model selection using dredge() 
 
 #dredge requires dataframe with no NAs--subsetting to only columns in the model
@@ -439,34 +375,23 @@ anova(ws_nowowe_re_mod_rd)
 
 
 
-#comparing models with one fixed effects to reduced model
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ta, test="Chisq")
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tv, test="Chisq")
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_ld, test="Chisq")
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tatv, test="Chisq")
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_tald, test="Chisq")
+#models without fixed effects of interest: removing main effect and interactions involving main effect
 
-
-#models without fixed effects of interest
-
-ws_nowowe_re_mod_noload <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + temp.avg:temp.var +
-                               temp.avg:resc_ld + (1|bug.id),
+ws_nowowe_re_mod_noload <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + temp.avg:temp.var + (1|bug.id),
                              family=binomial,
                              data=tvor_nw,
                              na.action=na.omit,
                              control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-ws_nowowe_re_mod_nota <- glmer(cbind(num.ecl, tot.died) ~ temp.var + resc_ld + temp.avg:temp.var +
-                                 temp.avg:resc_ld + (1|bug.id),
+ws_nowowe_re_mod_nota <- glmer(cbind(num.ecl, tot.died) ~ temp.var + resc_ld + (1|bug.id),
                                family=binomial,
                                data=tvor_nw,
                                na.action=na.omit,
                                control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
-ws_nowowe_re_mod_notv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + resc_ld + temp.avg:temp.var +
-                                 temp.avg:resc_ld + (1|bug.id),
+ws_nowowe_re_mod_notv <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + resc_ld + temp.avg:resc_ld + (1|bug.id),
                                family=binomial,
                                data=tvor_nw,
                                na.action=na.omit,
@@ -496,34 +421,6 @@ anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_notv, test="Chisq")
 anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_notatv, test="Chisq")
 anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_notald, test="Chisq")
 
-
-
-#models without fixed effect of interest, and any term that contains that fixed effect
-ws_nowowe_re_mod_noload2 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + temp.var + temp.avg:temp.var + (1|bug.id),
-                                 family=binomial,
-                                 data=tvor_nw,
-                                 na.action=na.omit,
-                                 control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-ws_nowowe_re_mod_nota2 <- glmer(cbind(num.ecl, tot.died) ~ temp.var + resc_ld + (1|bug.id),
-                               family=binomial,
-                               data=tvor_nw,
-                               na.action=na.omit,
-                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-
-ws_nowowe_re_mod_notv2 <- glmer(cbind(num.ecl, tot.died) ~ temp.avg + resc_ld + temp.avg:resc_ld + (1|bug.id),
-                               family=binomial,
-                               data=tvor_nw,
-                               na.action=na.omit,
-                               control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_noload2, test="Chisq")
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_nota2, test="Chisq")
-anova(ws_nowowe_re_mod_rd, ws_nowowe_re_mod_notv2, test="Chisq")
 
 
 
@@ -575,43 +472,45 @@ anova(wsem_nw_mod_rd)
 summary(wsem_nw_mod_rd)
 
 
-#determining significance of fixed effects
-wsem_nw_re_mod_ta <- glmer(cbind(num.em, num.unem) ~ temp.avg + (1|bug.id),
-                           family=binomial,
-                           data=tvor_nw,
-                           na.action=na.omit,
-                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+#determing effects of fixed effects: dropping main effects and interactions involving them, comparing to dredge model
+wsem_nw_mod_nold <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + temp.avg:temp.var + (1|bug.id),
+                          family=binomial,
+                          data=tvor_nw,
+                          na.action=na.omit,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+
+
+wsem_nw_mod_nota <- glmer(cbind(num.em, num.unem) ~ temp.var + resc_ld + (1|bug.id),
+                          family=binomial,
+                          data=tvor_nw,
+                          na.action=na.omit,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
 
-wsem_nw_re_mod_tv <- glmer(cbind(num.em, num.unem) ~ temp.var + (1|bug.id),
-                           family=binomial,
-                           data=tvor_nw,
-                           na.action=na.omit,
-                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
-
-
-wsem_nw_re_mod_ld <- glmer(cbind(num.em, num.unem) ~ resc_ld + (1|bug.id),
-                           family=binomial,
-                           data=tvor_nw,
-                           na.action=na.omit,
-                           control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+wsem_nw_mod_notv <- glmer(cbind(num.em, num.unem) ~ temp.avg + resc_ld + (1|bug.id),
+                          family=binomial,
+                          data=tvor_nw,
+                          na.action=na.omit,
+                          control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
 
-wsem_nw_re_mod_tatv <- glmer(cbind(num.em, num.unem) ~ temp.avg:temp.var + (1|bug.id),
-                             family=binomial,
-                             data=tvor_nw,
-                             na.action=na.omit,
-                             control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
+wsem_nw_mod_notatv <- glmer(cbind(num.em, num.unem) ~ temp.avg + temp.var + resc_ld + (1|bug.id),
+                            family=binomial,
+                            data=tvor_nw,
+                            na.action=na.omit,
+                            control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 100000)))
 
 
 
-#comparing fixed effects individually to reduced model
-anova(wsem_nw_mod_rd, wsem_nw_re_mod_ta, test="Chisq")
-anova(wsem_nw_mod_rd, wsem_nw_re_mod_tv, test="Chisq")
-anova(wsem_nw_mod_rd, wsem_nw_re_mod_ld, test="Chisq")
-anova(wsem_nw_mod_rd, wsem_nw_re_mod_tatv, test="Chisq")
+#compare to dredge model
+anova(wsem_nw_mod_rd, wsem_nw_mod_nold, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_nota, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_notv, test="Chisq")
+anova(wsem_nw_mod_rd, wsem_nw_mod_notatv, test="Chisq")
+
 
 
 #-----------------------
